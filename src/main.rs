@@ -1,3 +1,7 @@
+use std::io::Read;
+
 fn main() {
-    println!("Hello, world!");
+    let mut c: [u8; 1] = [0];
+    while std::io::stdin().read_exact(&mut c).is_ok() {
+    }
 }
