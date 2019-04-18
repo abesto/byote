@@ -1,19 +1,37 @@
+/*** includes ***/
+
 #[macro_use]
 extern crate lazy_static;
 
-use std::io::Read;
+use std::io::{Read, ErrorKind};
+use std::process::exit;
+use std::ffi::CString;
 use std::os::unix::io::{AsRawFd, RawFd};
 use termios::{Termios, tcsetattr, TCSAFLUSH, ECHO, ICANON, ISIG, IXON, IEXTEN, ICRNL, OPOST,
               BRKINT, INPCK, ISTRIP, CS8, VMIN, VTIME};
-use libc::atexit;
+use libc::{atexit, perror};
+
+/*** data ***/
 
 lazy_static! {
     static ref STDIN: RawFd = std::io::stdin().as_raw_fd();
-    static ref ORIG_TERMIOS: Termios = Termios::from_fd(*STDIN).unwrap();
+    static ref ORIG_TERMIOS: Termios = Termios::from_fd(*STDIN).map_err(|_| die("ORIG_TERMIOS")).unwrap();
+}
+
+/*** terminal ***/
+
+fn die(s: &str) {
+    let cs = CString::new(s).expect("CString::new failed");
+    unsafe {
+        perror(cs.as_ptr());
+    }
+    exit(1);
 }
 
 extern "C" fn disable_raw_mode() {
-    tcsetattr(*STDIN, TCSAFLUSH, &*ORIG_TERMIOS).unwrap();
+    if tcsetattr(*STDIN, TCSAFLUSH, &*ORIG_TERMIOS).is_err() {
+        die("disable_raw_mode/tcsetattr");
+    }
 }
 
 fn enable_raw_mode() {
@@ -28,8 +46,12 @@ fn enable_raw_mode() {
     raw.c_lflag &= !(ECHO | ICANON | IEXTEN | ISIG);
     raw.c_cc[VMIN] = 0;
     raw.c_cc[VTIME] = 1;
-    tcsetattr(*STDIN, TCSAFLUSH, &mut raw).unwrap();
+    if tcsetattr(*STDIN, TCSAFLUSH, &mut raw).is_err() {
+        die("enable_raw_mode/tcsetattr");
+    }
 }
+
+/*** init ***/
 
 fn main() {
     enable_raw_mode();
@@ -39,7 +61,14 @@ fn main() {
 
     loop {
         let mut buffer: [u8; 1] = [0];
-        stdin.read(&mut buffer).unwrap();
+
+        let result = stdin.read(&mut buffer);
+        result.err().map(|e|
+            if e.kind() != ErrorKind::Interrupted {
+                die("read");
+            }
+        );
+
         let n = buffer[0];
         let c = n as char;
         if c.is_ascii_control() {
