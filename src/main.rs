@@ -1,42 +1,32 @@
+#[macro_use]
+extern crate lazy_static;
+
 use std::io::Read;
-use libc::{STDIN_FILENO, TCSAFLUSH, ECHO, ICANON,
-           tcsetattr, tcgetattr, termios,
-           atexit};
+use std::os::unix::io::{AsRawFd, RawFd};
+use termios::{Termios, tcsetattr, TCSAFLUSH, ECHO, ICANON};
+use libc::atexit;
 
-// Couldn't find a way to convince the Rust compiler uninitialized global variables are OK.
-// Guess that's a plus? Should be possible with std::MaybeUninit::uninitialized()
-// at some point, maybe, possibly (see https://github.com/rust-lang/rust/issues/53491).
-static mut ORIG_TERMIOS: termios = termios {
-    c_cc: [0; 32],
-    c_cflag: 0,
-    c_iflag: 0,
-    c_ispeed: 0,
-    c_lflag: 0,
-    c_line: 0,
-    c_oflag: 0,
-    c_ospeed: 0
-};
-
-extern "C" fn disable_raw_mode() {
-    unsafe {
-        tcsetattr(STDIN_FILENO, TCSAFLUSH, &mut ORIG_TERMIOS);
-    }
+lazy_static! {
+    static ref STDIN: RawFd = std::io::stdin().as_raw_fd();
+    static ref ORIG_TERMIOS: Termios = Termios::from_fd(*STDIN).unwrap();
 }
 
-unsafe fn enable_raw_mode() {
-    tcgetattr(STDIN_FILENO, &mut ORIG_TERMIOS);
-    atexit(disable_raw_mode);
+extern "C" fn disable_raw_mode() {
+    tcsetattr(*STDIN, TCSAFLUSH, &*ORIG_TERMIOS).unwrap();
+}
 
-    let mut raw = ORIG_TERMIOS;
+fn enable_raw_mode() {
+    unsafe {
+        atexit(disable_raw_mode);
+    };
 
+    let mut raw: Termios = *ORIG_TERMIOS;
     raw.c_lflag &= !(ECHO | ICANON);
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &mut raw);
+    tcsetattr(*STDIN, TCSAFLUSH, &mut raw).unwrap();
 }
 
 fn main() {
-    unsafe {
-        enable_raw_mode();
-    }
+    enable_raw_mode();
 
     let mut c: [u8; 1] = [0];
     while std::io::stdin().read_exact(&mut c).is_ok() && c != ['q' as u8] {
