@@ -1,12 +1,14 @@
+use std::mem;
 use std::io::Read;
-use termios::{Termios, ECHO, tcsetattr, TCSAFLUSH};
-use std::os::unix::io::AsRawFd;
+use libc::{STDIN_FILENO, tcsetattr, tcgetattr, TCSAFLUSH, termios, ECHO};
 
 fn enable_raw_mode() {
-    let fd = std::io::stdin().as_raw_fd();
-    let mut termios = Termios::from_fd(fd).unwrap();
-    termios.c_lflag &= !ECHO;
-    tcsetattr(fd, TCSAFLUSH, &mut termios).unwrap();
+    let mut raw: termios = unsafe { mem::uninitialized() };
+    unsafe {
+        tcgetattr(STDIN_FILENO, &mut raw);
+        raw.c_lflag &= !ECHO;
+        tcsetattr(STDIN_FILENO, TCSAFLUSH, &mut raw);
+    }
 }
 
 fn main() {

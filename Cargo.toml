@@ -5,4 +5,4 @@ authors = ["Zoltan Nagy <abesto0@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-termios = "0.3.1"
+libc = "0.2.51"
