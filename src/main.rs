@@ -3,7 +3,7 @@ extern crate lazy_static;
 
 use std::io::Read;
 use std::os::unix::io::{AsRawFd, RawFd};
-use termios::{Termios, tcsetattr, TCSAFLUSH, ECHO, ICANON, ISIG, IXON, IEXTEN, ICRNL};
+use termios::{Termios, tcsetattr, TCSAFLUSH, ECHO, ICANON, ISIG, IXON, IEXTEN, ICRNL, OPOST};
 use libc::atexit;
 
 lazy_static! {
@@ -22,6 +22,7 @@ fn enable_raw_mode() {
 
     let mut raw: Termios = *ORIG_TERMIOS;
     raw.c_iflag &= !(IXON | ICRNL);
+    raw.c_oflag &= !OPOST;
     raw.c_lflag &= !(ECHO | ICANON | IEXTEN | ISIG);
     tcsetattr(*STDIN, TCSAFLUSH, &mut raw).unwrap();
 }
@@ -36,9 +37,9 @@ fn main() {
         let n = buffer[0];
         let c = n as char;
         if c.is_ascii_control() {
-            println!("{}", n)
+            print!("{}\r\n", n)
         } else {
-            println!("{} ('{}')", n, c);
+            print!("{} ('{}')\r\n", n, c);
         }
     }
 }
