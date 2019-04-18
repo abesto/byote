@@ -28,7 +28,16 @@ fn enable_raw_mode() {
 fn main() {
     enable_raw_mode();
 
-    let mut c: [u8; 1] = [0];
-    while std::io::stdin().read_exact(&mut c).is_ok() && c != ['q' as u8] {
+    let mut buffer: [u8; 1] = [0];
+    let exit = ['q' as u8];
+    let mut stdin = std::io::stdin();
+    while stdin.read_exact(&mut buffer).is_ok() && buffer != exit {
+        let n = buffer[0];
+        let c = n as char;
+        if c.is_ascii_control() {
+            println!("{}", n)
+        } else {
+            println!("{} ('{}')", n, c);
+        }
     }
 }
