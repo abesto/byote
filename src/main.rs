@@ -1,5 +1,7 @@
 use std::io::Read;
-use libc::{STDIN_FILENO, tcsetattr, tcgetattr, TCSAFLUSH, termios, ECHO, atexit};
+use libc::{STDIN_FILENO, TCSAFLUSH, ECHO, ICANON,
+           tcsetattr, tcgetattr, termios,
+           atexit};
 
 // Couldn't find a way to convince the Rust compiler uninitialized global variables are OK.
 // Guess that's a plus? Should be possible with std::MaybeUninit::uninitialized()
@@ -25,9 +27,9 @@ unsafe fn enable_raw_mode() {
     tcgetattr(STDIN_FILENO, &mut ORIG_TERMIOS);
     atexit(disable_raw_mode);
 
-    let mut raw =  ORIG_TERMIOS;
+    let mut raw = ORIG_TERMIOS;
 
-    raw.c_lflag &= !ECHO;
+    raw.c_lflag &= !(ECHO | ICANON);
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &mut raw);
 }
 
