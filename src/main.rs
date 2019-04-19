@@ -150,10 +150,16 @@ fn flush_stdout() {
 }
 
 fn editor_refresh_screen(e: &EditorConfig) {
-    let mut buffer = String::from(CLEAR_SCREEN);
+    let mut buffer = String::new();
+
+    buffer += "\x1b[?25l";
+    buffer += CLEAR_SCREEN;
+
     editor_draw_rows(e, &mut buffer);
 
     buffer += "\x1b[H";
+    buffer += "\x1b[?25h";
+
     print!("{}", buffer);
 
     flush_stdout();
