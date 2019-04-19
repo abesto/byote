@@ -74,6 +74,7 @@ fn editor_read_key() -> u8 {
 /*** output ***/
 fn editor_refresh_screen() {
     print!("\x1b[2J");
+    print!("\x1b[H");
     std::io::stdout()
         .flush()
         .unwrap_or_else(|_| die("editor_refresh_screen/flush"));
