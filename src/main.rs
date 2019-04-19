@@ -96,10 +96,16 @@ fn editor_read_key() -> u8 {
 
 fn get_window_size(rows: &mut u16, cols: &mut u16) -> bool {
     let mut ws: winsize = unsafe { std::mem::zeroed() };
-    unsafe {
-        ioctl(*STDOUT_RAWFD, TIOCGWINSZ, &mut ws);
-    }
-    if ws.ws_col == 0 {
+    let result = unsafe { ioctl(*STDOUT_RAWFD, TIOCGWINSZ, &mut ws) };
+    if true || result == -1 || ws.ws_col == 0 {
+        let result = std::io::stdout().write(b"\x1b[999C\x1b[999B");
+        flush_stdout();
+        match result {
+            Ok(12) => {
+                editor_read_key();
+            }
+            _ => return false,
+        }
         false
     } else {
         *cols = ws.ws_col;
