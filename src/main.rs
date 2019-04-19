@@ -192,7 +192,7 @@ fn get_window_size() -> Result<(usize, usize)> {
         flush_stdout();
         match result {
             Ok(12) => get_cursor_position(),
-            _ => bail!("failed to determine window size"),
+            x => bail!(format!("failed to determine window size: {:?}", x)),
         }
     } else {
         Ok((ws.ws_row as usize, ws.ws_col as usize))
@@ -200,6 +200,7 @@ fn get_window_size() -> Result<(usize, usize)> {
 }
 
 /*** output ***/
+
 fn flush_stdout() {
     std::io::stdout()
         .flush()
@@ -251,9 +252,10 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
         }
     }
 }
+
 /*** input ***/
 
-fn editor_move_cursor(key: EditorKey, e: &mut EditorConfig) {
+fn editor_move_cursor(key: &EditorKey, e: &mut EditorConfig) {
     match key {
         EditorKey::ArrowLeft if e.cx > 0 => e.cx -= 1,
         EditorKey::ArrowRight if e.cx < e.screencols - 1 => e.cx += 1,
@@ -275,18 +277,16 @@ fn editor_process_keypress(e: &mut EditorConfig) {
         EditorKey::ArrowDown
         | EditorKey::ArrowUp
         | EditorKey::ArrowLeft
-        | EditorKey::ArrowRight => editor_move_cursor(key, e),
+        | EditorKey::ArrowRight => editor_move_cursor(&key, e),
 
         EditorKey::PageDown | EditorKey::PageUp => {
+            let arrow = if key == EditorKey::PageUp {
+                EditorKey::ArrowUp
+            } else {
+                EditorKey::ArrowDown
+            };
             for _ in 0..e.screenrows {
-                editor_move_cursor(
-                    if key == EditorKey::PageUp {
-                        EditorKey::ArrowUp
-                    } else {
-                        EditorKey::ArrowDown
-                    },
-                    e,
-                );
+                editor_move_cursor(&arrow, e);
             }
         }
 
