@@ -11,6 +11,11 @@ use termios::{Termios, tcsetattr, TCSAFLUSH, ECHO, ICANON, ISIG, IXON, IEXTEN, I
               BRKINT, INPCK, ISTRIP, CS8, VMIN, VTIME};
 use libc::{atexit, perror};
 
+/*** defines ***/
+fn ctrl_key(k: u8) -> u8 {
+    return k & 0x1f;
+}
+
 /*** data ***/
 
 lazy_static! {
@@ -56,7 +61,6 @@ fn enable_raw_mode() {
 fn main() {
     enable_raw_mode();
 
-    let exit = ['q' as u8];
     let mut stdin = std::io::stdin();
 
     loop {
@@ -69,14 +73,13 @@ fn main() {
             }
         );
 
-        let n = buffer[0];
-        let c = n as char;
+        let c = buffer[0];
         if c.is_ascii_control() {
-            print!("{}\r\n", n)
+            print!("{}\r\n", c)
         } else {
-            print!("{} ('{}')\r\n", n, c);
+            print!("{} ('{}')\r\n", c, c as char);
         }
-        if buffer == exit {
+        if c == ctrl_key(b'q') {
             break;
         }
     }
