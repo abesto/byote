@@ -31,8 +31,9 @@ enum EditorKey {
     ArrowDown,
 
     Home,
-    End,
     PageUp,
+    Delete,
+    End,
     PageDown,
 
     Escape,
@@ -130,6 +131,7 @@ fn editor_read_key() -> EditorKey {
                         "[C" => EditorKey::ArrowRight,
                         "[D" => EditorKey::ArrowLeft,
 
+                        "[3~" => EditorKey::Delete,
                         "[5~" => EditorKey::PageUp,
                         "[6~" => EditorKey::PageDown,
                         "[1~" | "[7~" | "[H" | "OH" => EditorKey::Home,
