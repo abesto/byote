@@ -162,8 +162,11 @@ fn editor_refresh_screen(e: &EditorConfig) {
 
 #[allow(clippy::print_with_newline)]
 fn editor_draw_rows(e: &EditorConfig) {
-    for _i in 1..e.screenrows {
-        print!("~\r\n");
+    for y in 1..e.screenrows {
+        print!("~");
+        if y < e.screenrows - 1 {
+            print!("\r\n");
+        }
     }
 }
 /*** input ***/
