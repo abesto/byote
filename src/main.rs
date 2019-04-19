@@ -23,6 +23,15 @@ fn ctrl_key(k: u8) -> u8 {
     k & 0x1f
 }
 
+enum EditorKey {
+    ArrowLeft,
+    ArrowRight,
+    ArrowUp,
+    ArrowDown,
+    Escape,
+    Char(u8),
+}
+
 const BYOTE_VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 
 /*** data ***/
@@ -86,7 +95,7 @@ fn enable_raw_mode() {
     }
 }
 
-fn editor_read_key() -> u8 {
+fn editor_read_key() -> EditorKey {
     let mut buffer: [u8; 1] = [0];
     loop {
         match std::io::stdin().read(&mut buffer) {
@@ -95,27 +104,27 @@ fn editor_read_key() -> u8 {
             Ok(1) => {
                 let c = buffer[0];
                 if c == b'\x1b' {
-                    let mut seq = [0_u8; 3];
+                    let mut seq = [0_u8; 2];
 
                     if std::io::stdin().read_exact(&mut seq).is_err() {
                         // I think we're potentially losing a character here? If there's a char
                         // after the escape, but only one?
-                        return b'\x1b';
+                        return EditorKey::Escape;
                     }
 
                     if seq[0] == b'[' {
                         match seq[1] {
-                            b'A' => return b'w',
-                            b'B' => return b's',
-                            b'C' => return b'd',
-                            b'D' => return b'a',
+                            b'A' => return EditorKey::ArrowUp,
+                            b'B' => return EditorKey::ArrowDown,
+                            b'C' => return EditorKey::ArrowRight,
+                            b'D' => return EditorKey::ArrowLeft,
                             _ => (),
                         }
                     }
 
-                    return b'\x1b';
+                    return EditorKey::Escape;
                 } else {
-                    return c;
+                    return EditorKey::Char(c);
                 }
             }
             Ok(0) => (),
@@ -228,27 +237,27 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
 }
 /*** input ***/
 
-fn editor_move_cursor(key: u8, e: &mut EditorConfig) {
+fn editor_move_cursor(key: EditorKey, e: &mut EditorConfig) {
     match key {
-        b'a' => e.cx -= 1,
-        b'd' => e.cx += 1,
-        b'w' => e.cy -= 1,
-        b's' => e.cy += 1,
+        EditorKey::ArrowLeft => e.cx -= 1,
+        EditorKey::ArrowRight => e.cx += 1,
+        EditorKey::ArrowUp => e.cy -= 1,
+        EditorKey::ArrowDown => e.cy += 1,
         _ => (),
     }
 }
 
 fn editor_process_keypress(e: &mut EditorConfig) {
-    let c = editor_read_key();
-
-    if c == ctrl_key(b'q') {
-        print!("{}", "\x1b[2J\x1b[H");
-        flush_stdout();
-        exit(0);
-    }
-
-    match c {
-        b'a' | b'd' | b'w' | b's' => editor_move_cursor(c, e),
+    match editor_read_key() {
+        EditorKey::Char(c) if c == ctrl_key(b'q') => {
+            print!("{}", "\x1b[2J\x1b[H");
+            flush_stdout();
+            exit(0);
+        }
+        arrow @ EditorKey::ArrowDown
+        | arrow @ EditorKey::ArrowUp
+        | arrow @ EditorKey::ArrowLeft
+        | arrow @ EditorKey::ArrowRight => editor_move_cursor(arrow, e),
         _ => (),
     }
 }
