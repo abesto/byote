@@ -210,7 +210,7 @@ fn editor_refresh_screen(e: &EditorConfig) {
 
 #[allow(clippy::print_with_newline)]
 fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
-    for y in 1..e.screenrows {
+    for y in 0..e.screenrows {
         if (y == e.screenrows / 3) {
             let mut msg = format!("BYOTE -- version {}", BYOTE_VERSION.unwrap_or("unknown"));
             msg.truncate(e.screencols);
