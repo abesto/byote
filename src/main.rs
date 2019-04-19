@@ -160,7 +160,7 @@ fn editor_refresh_screen(e: &EditorConfig) {
 
     editor_draw_rows(e, &mut buffer);
 
-    buffer += &format!("\x1b[{};{}H", e.cx + 1, e.cy + 1);
+    buffer += &format!("\x1b[{};{}H", e.cy + 1, e.cx + 1);
 
     buffer += "\x1b[?25h";
 
@@ -198,12 +198,28 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
 }
 /*** input ***/
 
-fn editor_process_keypress() {
+fn editor_move_cursor(key: u8, e: &mut EditorConfig) {
+    match key {
+        b'a' => e.cx -= 1,
+        b'd' => e.cx += 1,
+        b'w' => e.cy -= 1,
+        b's' => e.cy += 1,
+        _ => (),
+    }
+}
+
+fn editor_process_keypress(e: &mut EditorConfig) {
     let c = editor_read_key();
+
     if c == ctrl_key(b'q') {
         print!("{}", "\x1b[2J\x1b[H");
         flush_stdout();
         exit(0);
+    }
+
+    match c {
+        b'a' | b'd' | b'w' | b's' => editor_move_cursor(c, e),
+        _ => (),
     }
 }
 
@@ -217,10 +233,10 @@ fn init_editor() -> EditorConfig {
 
 fn main() {
     enable_raw_mode();
-    let e = init_editor();
+    let mut e = init_editor();
 
     loop {
         editor_refresh_screen(&e);
-        editor_process_keypress();
+        editor_process_keypress(&mut e);
     }
 }
