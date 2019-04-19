@@ -19,8 +19,8 @@ fn ctrl_key(k: u8) -> u8 {
 /*** data ***/
 
 lazy_static! {
-    static ref STDIN: RawFd = std::io::stdin().as_raw_fd();
-    static ref ORIG_TERMIOS: Termios = Termios::from_fd(*STDIN).map_err(|_| die("ORIG_TERMIOS")).unwrap();
+    static ref STDIN_RAWFD: RawFd = std::io::stdin().as_raw_fd();
+    static ref ORIG_TERMIOS: Termios = Termios::from_fd(*STDIN_RAWFD).map_err(|_| die("ORIG_TERMIOS")).unwrap();
 }
 
 /*** terminal ***/
@@ -34,7 +34,7 @@ fn die(s: &str) {
 }
 
 extern "C" fn disable_raw_mode() {
-    if tcsetattr(*STDIN, TCSAFLUSH, &*ORIG_TERMIOS).is_err() {
+    if tcsetattr(*STDIN_RAWFD, TCSAFLUSH, &*ORIG_TERMIOS).is_err() {
         die("disable_raw_mode/tcsetattr");
     }
 }
@@ -51,8 +51,28 @@ fn enable_raw_mode() {
     raw.c_lflag &= !(ECHO | ICANON | IEXTEN | ISIG);
     raw.c_cc[VMIN] = 0;
     raw.c_cc[VTIME] = 1;
-    if tcsetattr(*STDIN, TCSAFLUSH, &mut raw).is_err() {
+    if tcsetattr(*STDIN_RAWFD, TCSAFLUSH, &mut raw).is_err() {
         die("enable_raw_mode/tcsetattr");
+    }
+}
+
+fn editor_read_key() -> u8 {
+    let mut buffer: [u8; 1] = [0];
+    loop {
+        match std::io::stdin().read(&mut buffer) {
+            Err(ref e) if e.kind() != ErrorKind::Interrupted => die("editor_read_key/read"),
+            Ok(_) => return buffer[0],
+            _ => ()
+        }
+    }
+}
+
+/*** input ***/
+
+fn editor_process_keypress() {
+    let c = editor_read_key();
+    if c == ctrl_key(b'q') {
+        exit(0);
     }
 }
 
@@ -61,26 +81,7 @@ fn enable_raw_mode() {
 fn main() {
     enable_raw_mode();
 
-    let mut stdin = std::io::stdin();
-
     loop {
-        let mut buffer: [u8; 1] = [0];
-
-        let result = stdin.read(&mut buffer);
-        result.err().map(|e|
-            if e.kind() != ErrorKind::Interrupted {
-                die("read");
-            }
-        );
-
-        let c = buffer[0];
-        if c.is_ascii_control() {
-            print!("{}\r\n", c)
-        } else {
-            print!("{} ('{}')\r\n", c, c as char);
-        }
-        if c == ctrl_key(b'q') {
-            break;
-        }
+        editor_process_keypress();
     }
 }
