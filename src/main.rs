@@ -91,8 +91,16 @@ fn editor_read_key() -> u8 {
     loop {
         match std::io::stdin().read(&mut buffer) {
             Err(ref e) if e.kind() != ErrorKind::Interrupted => die("editor_read_key/read"),
-            Ok(1) => return buffer[0],
-            _ => (),
+            Err(e) => die(&format!("editor_read_key: {}", e)),
+            Ok(1) => {
+                let c = buffer[0];
+                return c;
+            }
+            Ok(0) => (),
+            Ok(n) => die(&format!(
+                "editor_read_key read unexpected number of chars: {}",
+                n
+            )),
         }
     }
 }
