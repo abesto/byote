@@ -170,6 +170,16 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
         if (y == e.screenrows / 3) {
             let mut msg = format!("BYOTE -- version {}", BYOTE_VERSION.unwrap_or("unknown"));
             msg.truncate(e.screencols as usize);
+            let mut padding = (e.screencols as usize - msg.len()) / 2;
+            if padding > 0 {
+                *buffer += "~";
+                padding -= 1;
+            }
+            while padding > 0 {
+                *buffer += " ";
+                padding -= 1;
+            }
+
             *buffer += &msg;
         } else {
             *buffer += "~";
