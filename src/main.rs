@@ -128,7 +128,7 @@ fn get_cursor_position(rows: &mut u16, cols: &mut u16) -> bool {
 fn get_window_size(rows: &mut u16, cols: &mut u16) -> bool {
     let mut ws: winsize = unsafe { std::mem::zeroed() };
     let result = unsafe { ioctl(*STDOUT_RAWFD, TIOCGWINSZ, &mut ws) };
-    if true || result == -1 || ws.ws_col == 0 {
+    if result == -1 || ws.ws_col == 0 {
         let result = std::io::stdout().write(b"\x1b[999C\x1b[999B");
         flush_stdout();
         match result {
