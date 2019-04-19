@@ -94,7 +94,29 @@ fn editor_read_key() -> u8 {
             Err(e) => die(&format!("editor_read_key: {}", e)),
             Ok(1) => {
                 let c = buffer[0];
-                return c;
+                if c == b'\x1b' {
+                    let mut seq = [0_u8; 3];
+
+                    if std::io::stdin().read_exact(&mut seq).is_err() {
+                        // I think we're potentially losing a character here? If there's a char
+                        // after the escape, but only one?
+                        return b'\x1b';
+                    }
+
+                    if seq[0] == b'[' {
+                        match seq[1] {
+                            b'A' => return b'w',
+                            b'B' => return b's',
+                            b'C' => return b'd',
+                            b'D' => return b'a',
+                            _ => (),
+                        }
+                    }
+
+                    return b'\x1b';
+                } else {
+                    return c;
+                }
             }
             Ok(0) => (),
             Ok(n) => die(&format!(
@@ -112,7 +134,7 @@ fn get_cursor_position() -> Result<(usize, usize)> {
     let mut buffer = [0_u8; 32];
     let mut i = 0;
     while i < buffer.len() {
-        if !std::io::stdin().read_exact(&mut buffer[i..=i]).is_ok() {
+        if std::io::stdin().read_exact(&mut buffer[i..=i]).is_err() {
             break;
         }
         if buffer[i] == b'R' {
