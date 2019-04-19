@@ -23,6 +23,8 @@ fn ctrl_key(k: u8) -> u8 {
     k & 0x1f
 }
 
+const CLEAR_SCREEN: &str = "\x1b[2J\x1b[H";
+
 /*** data ***/
 
 struct EditorConfig {
@@ -52,7 +54,7 @@ lazy_static! {
 
 #[allow(clippy::print_with_newline)]
 fn die(s: &str) {
-    editor_clear_screen();
+    print!("{}", CLEAR_SCREEN);
     print!("{}: {}\r\n", s, Error::last().to_string());
     flush_stdout();
     exit(1);
@@ -147,25 +149,22 @@ fn flush_stdout() {
         .unwrap();
 }
 
-fn editor_clear_screen() {
-    print!("\x1b[2J");
-    print!("\x1b[H");
-}
-
 fn editor_refresh_screen(e: &EditorConfig) {
-    editor_clear_screen();
-    editor_draw_rows(e);
+    let mut buffer = String::from(CLEAR_SCREEN);
+    editor_draw_rows(e, &mut buffer);
 
-    print!("\x1b[H");
+    buffer += "\x1b[H";
+    print!("{}", buffer);
+
     flush_stdout();
 }
 
 #[allow(clippy::print_with_newline)]
-fn editor_draw_rows(e: &EditorConfig) {
+fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
     for y in 1..e.screenrows {
-        print!("~");
+        *buffer += "~";
         if y < e.screenrows - 1 {
-            print!("\r\n");
+            *buffer += "\r\n";
         }
     }
 }
@@ -174,7 +173,8 @@ fn editor_draw_rows(e: &EditorConfig) {
 fn editor_process_keypress() {
     let c = editor_read_key();
     if c == ctrl_key(b'q') {
-        editor_clear_screen();
+        print!("{}", CLEAR_SCREEN);
+        flush_stdout();
         exit(0);
     }
 }
