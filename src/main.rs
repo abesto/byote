@@ -30,6 +30,8 @@ enum EditorKey {
     ArrowUp,
     ArrowDown,
 
+    Home,
+    End,
     PageUp,
     PageDown,
 
@@ -127,8 +129,12 @@ fn editor_read_key() -> EditorKey {
                         "[B" => EditorKey::ArrowDown,
                         "[C" => EditorKey::ArrowRight,
                         "[D" => EditorKey::ArrowLeft,
+
                         "[5~" => EditorKey::PageUp,
                         "[6~" => EditorKey::PageDown,
+                        "[1~" | "[7~" | "[H" | "OH" => EditorKey::Home,
+                        "[4~" | "[8~" | "[F" | "OF" => EditorKey::End,
+
                         _ => EditorKey::Escape,
                     };
                 } else {
@@ -281,6 +287,9 @@ fn editor_process_keypress(e: &mut EditorConfig) {
                 );
             }
         }
+
+        EditorKey::Home => e.cx = 0,
+        EditorKey::End => e.cx = e.screencols - 1,
 
         _ => (),
     }
