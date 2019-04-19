@@ -3,7 +3,7 @@
 #[macro_use]
 extern crate lazy_static;
 
-use libc::{atexit, perror};
+use libc::{atexit, ioctl, perror, winsize, TIOCGWINSZ};
 use std::ffi::CString;
 use std::io::{ErrorKind, Read, Write};
 use std::os::unix::io::{AsRawFd, RawFd};
@@ -26,6 +26,7 @@ struct EditorConfig {
 
 lazy_static! {
     static ref STDIN_RAWFD: RawFd = std::io::stdin().as_raw_fd();
+    static ref STDOUT_RAWFD: RawFd = std::io::stdout().as_raw_fd();
     static ref E: EditorConfig = EditorConfig {
         orig_termios: Termios::from_fd(*STDIN_RAWFD)
             .map_err(|_| die("ORIG_TERMIOS"))
@@ -76,6 +77,20 @@ fn editor_read_key() -> u8 {
             Ok(_) => return buffer[0],
             _ => (),
         }
+    }
+}
+
+fn get_window_size(rows: &mut u16, cols: &mut u16) -> bool {
+    let mut ws: winsize = unsafe { std::mem::zeroed() };
+    unsafe {
+        ioctl(*STDOUT_RAWFD, TIOCGWINSZ, &mut ws);
+    }
+    if ws.ws_col == 0 {
+        false
+    } else {
+        *cols = ws.ws_col;
+        *rows = ws.ws_row;
+        true
     }
 }
 
