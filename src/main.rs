@@ -28,8 +28,8 @@ const BYOTE_VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 /*** data ***/
 
 struct EditorConfig {
-    screenrows: u16,
-    screencols: u16,
+    screenrows: usize,
+    screencols: usize,
 }
 
 impl EditorConfig {
@@ -93,7 +93,7 @@ fn editor_read_key() -> u8 {
     }
 }
 
-fn get_cursor_position() -> Result<(u16, u16)> {
+fn get_cursor_position() -> Result<(usize, usize)> {
     std::io::stdout().write_all(b"\x1b[6n\r\n")?;
     flush_stdout();
 
@@ -120,12 +120,12 @@ fn get_cursor_position() -> Result<(u16, u16)> {
     }
 
     Ok((
-        rows_and_cols[0].parse::<u16>()?,
-        rows_and_cols[1].parse::<u16>()?,
+        rows_and_cols[0].parse::<usize>()?,
+        rows_and_cols[1].parse::<usize>()?,
     ))
 }
 
-fn get_window_size() -> Result<(u16, u16)> {
+fn get_window_size() -> Result<(usize, usize)> {
     let mut ws: winsize = unsafe { std::mem::zeroed() };
     let result = unsafe { ioctl(*STDOUT_RAWFD, TIOCGWINSZ, &mut ws) };
     if result == -1 || ws.ws_col == 0 {
@@ -136,7 +136,7 @@ fn get_window_size() -> Result<(u16, u16)> {
             _ => bail!("failed to determine window size"),
         }
     } else {
-        Ok((ws.ws_row, ws.ws_col))
+        Ok((ws.ws_row as usize, ws.ws_col as usize))
     }
 }
 
@@ -169,8 +169,8 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
     for y in 1..e.screenrows {
         if (y == e.screenrows / 3) {
             let mut msg = format!("BYOTE -- version {}", BYOTE_VERSION.unwrap_or("unknown"));
-            msg.truncate(e.screencols as usize);
-            let mut padding = (e.screencols as usize - msg.len()) / 2;
+            msg.truncate(e.screencols);
+            let mut padding = (e.screencols - msg.len()) / 2;
             if padding > 0 {
                 *buffer += "~";
                 padding -= 1;
