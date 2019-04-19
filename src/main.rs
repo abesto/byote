@@ -160,7 +160,8 @@ fn editor_refresh_screen(e: &EditorConfig) {
 
     editor_draw_rows(e, &mut buffer);
 
-    buffer += "\x1b[H";
+    buffer += &format!("\x1b[{};{}H", e.cx + 1, e.cy + 1);
+
     buffer += "\x1b[?25h";
 
     print!("{}", buffer);
