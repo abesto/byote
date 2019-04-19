@@ -30,6 +30,8 @@ lazy_static! {
 /*** terminal ***/
 
 fn die(s: &str) {
+    editor_clear_screen();
+
     let cs = CString::new(s).expect("CString::new failed");
     unsafe {
         perror(cs.as_ptr() as *const i8);
@@ -72,12 +74,16 @@ fn editor_read_key() -> u8 {
 }
 
 /*** output ***/
-fn editor_refresh_screen() {
+fn editor_clear_screen() {
     print!("\x1b[2J");
     print!("\x1b[H");
     std::io::stdout()
         .flush()
-        .unwrap_or_else(|_| die("editor_refresh_screen/flush"));
+        .unwrap_or_else(|_| die("editor_clear_screen/flush"));
+}
+
+fn editor_refresh_screen() {
+    editor_clear_screen();
 }
 
 /*** input ***/
@@ -85,6 +91,7 @@ fn editor_refresh_screen() {
 fn editor_process_keypress() {
     let c = editor_read_key();
     if c == ctrl_key(b'q') {
+        editor_clear_screen();
         exit(0);
     }
 }
