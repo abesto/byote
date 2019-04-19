@@ -3,24 +3,28 @@
 #[macro_use]
 extern crate lazy_static;
 
-use std::io::{Read, ErrorKind};
-use std::process::exit;
-use std::ffi::CString;
-use std::os::unix::io::{AsRawFd, RawFd};
-use termios::{Termios, tcsetattr, TCSAFLUSH, ECHO, ICANON, ISIG, IXON, IEXTEN, ICRNL, OPOST,
-              BRKINT, INPCK, ISTRIP, CS8, VMIN, VTIME};
 use libc::{atexit, perror};
+use std::ffi::CString;
+use std::io::{ErrorKind, Read, Write};
+use std::os::unix::io::{AsRawFd, RawFd};
+use std::process::exit;
+use termios::{
+    tcsetattr, Termios, BRKINT, CS8, ECHO, ICANON, ICRNL, IEXTEN, INPCK, ISIG, ISTRIP, IXON, OPOST,
+    TCSAFLUSH, VMIN, VTIME,
+};
 
 /*** defines ***/
 fn ctrl_key(k: u8) -> u8 {
-    return k & 0x1f;
+    k & 0x1f
 }
 
 /*** data ***/
 
 lazy_static! {
     static ref STDIN_RAWFD: RawFd = std::io::stdin().as_raw_fd();
-    static ref ORIG_TERMIOS: Termios = Termios::from_fd(*STDIN_RAWFD).map_err(|_| die("ORIG_TERMIOS")).unwrap();
+    static ref ORIG_TERMIOS: Termios = Termios::from_fd(*STDIN_RAWFD)
+        .map_err(|_| die("ORIG_TERMIOS"))
+        .unwrap();
 }
 
 /*** terminal ***/
@@ -28,7 +32,7 @@ lazy_static! {
 fn die(s: &str) {
     let cs = CString::new(s).expect("CString::new failed");
     unsafe {
-        perror(cs.as_ptr());
+        perror(cs.as_ptr() as *const i8);
     }
     exit(1);
 }
@@ -51,7 +55,7 @@ fn enable_raw_mode() {
     raw.c_lflag &= !(ECHO | ICANON | IEXTEN | ISIG);
     raw.c_cc[VMIN] = 0;
     raw.c_cc[VTIME] = 1;
-    if tcsetattr(*STDIN_RAWFD, TCSAFLUSH, &mut raw).is_err() {
+    if tcsetattr(*STDIN_RAWFD, TCSAFLUSH, &raw).is_err() {
         die("enable_raw_mode/tcsetattr");
     }
 }
@@ -62,9 +66,17 @@ fn editor_read_key() -> u8 {
         match std::io::stdin().read(&mut buffer) {
             Err(ref e) if e.kind() != ErrorKind::Interrupted => die("editor_read_key/read"),
             Ok(_) => return buffer[0],
-            _ => ()
+            _ => (),
         }
     }
+}
+
+/*** output ***/
+fn editor_refresh_screen() {
+    print!("\x1b[2J");
+    std::io::stdout()
+        .flush()
+        .unwrap_or_else(|_| die("editor_refresh_screen/flush"));
 }
 
 /*** input ***/
@@ -82,6 +94,7 @@ fn main() {
     enable_raw_mode();
 
     loop {
+        editor_refresh_screen();
         editor_process_keypress();
     }
 }
