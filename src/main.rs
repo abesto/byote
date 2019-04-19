@@ -30,6 +30,8 @@ const BYOTE_VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 struct EditorConfig {
     screenrows: usize,
     screencols: usize,
+    cx: usize,
+    cy: usize,
 }
 
 impl EditorConfig {
@@ -38,6 +40,8 @@ impl EditorConfig {
         Ok(EditorConfig {
             screenrows: rows,
             screencols: cols,
+            cx: 0,
+            cy: 0,
         })
     }
 }
