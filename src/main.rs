@@ -28,7 +28,12 @@ enum EditorKey {
     ArrowRight,
     ArrowUp,
     ArrowDown,
+
+    PageUp,
+    PageDown,
+
     Escape,
+
     Char(u8),
 }
 
@@ -104,25 +109,27 @@ fn editor_read_key() -> EditorKey {
             Ok(1) => {
                 let c = buffer[0];
                 if c == b'\x1b' {
-                    let mut seq = [0_u8; 2];
+                    let mut buffer = [0_u8; 3];
 
-                    if std::io::stdin().read_exact(&mut seq).is_err() {
-                        // I think we're potentially losing a character here? If there's a char
-                        // after the escape, but only one?
+                    // I think we're potentially losing a character or two here? If there's a char
+                    // after the escape, but not matching what we expect?
+
+                    let result = std::io::stdin().read(&mut buffer);
+                    if result.is_err() {
                         return EditorKey::Escape;
                     }
 
-                    if seq[0] == b'[' {
-                        match seq[1] {
-                            b'A' => return EditorKey::ArrowUp,
-                            b'B' => return EditorKey::ArrowDown,
-                            b'C' => return EditorKey::ArrowRight,
-                            b'D' => return EditorKey::ArrowLeft,
-                            _ => (),
-                        }
-                    }
+                    let seq = &buffer[..result.unwrap()];
 
-                    return EditorKey::Escape;
+                    return match std::str::from_utf8(seq).unwrap() {
+                        "[A" => EditorKey::ArrowUp,
+                        "[B" => EditorKey::ArrowDown,
+                        "[C" => EditorKey::ArrowRight,
+                        "[D" => EditorKey::ArrowLeft,
+                        "[5~" => EditorKey::PageUp,
+                        "[6~" => EditorKey::PageDown,
+                        _ => EditorKey::Escape,
+                    };
                 } else {
                     return EditorKey::Char(c);
                 }
