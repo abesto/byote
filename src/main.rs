@@ -23,6 +23,7 @@ fn ctrl_key(k: u8) -> u8 {
     k & 0x1f
 }
 
+#[derive(Ord, PartialOrd, Eq, PartialEq)]
 enum EditorKey {
     ArrowLeft,
     ArrowRight,
@@ -255,16 +256,32 @@ fn editor_move_cursor(key: EditorKey, e: &mut EditorConfig) {
 }
 
 fn editor_process_keypress(e: &mut EditorConfig) {
-    match editor_read_key() {
+    let key = editor_read_key();
+    match key {
         EditorKey::Char(c) if c == ctrl_key(b'q') => {
             print!("{}", "\x1b[2J\x1b[H");
             flush_stdout();
             exit(0);
         }
-        arrow @ EditorKey::ArrowDown
-        | arrow @ EditorKey::ArrowUp
-        | arrow @ EditorKey::ArrowLeft
-        | arrow @ EditorKey::ArrowRight => editor_move_cursor(arrow, e),
+
+        EditorKey::ArrowDown
+        | EditorKey::ArrowUp
+        | EditorKey::ArrowLeft
+        | EditorKey::ArrowRight => editor_move_cursor(key, e),
+
+        EditorKey::PageDown | EditorKey::PageUp => {
+            for _ in 0..e.screenrows {
+                editor_move_cursor(
+                    if key == EditorKey::PageUp {
+                        EditorKey::ArrowUp
+                    } else {
+                        EditorKey::ArrowDown
+                    },
+                    e,
+                );
+            }
+        }
+
         _ => (),
     }
 }
