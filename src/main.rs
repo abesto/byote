@@ -21,7 +21,6 @@ fn ctrl_key(k: u8) -> u8 {
 /*** data ***/
 
 struct EditorConfig {
-    orig_termios: Termios,
     screenrows: u16,
     screencols: u16,
 }
@@ -29,9 +28,6 @@ struct EditorConfig {
 impl EditorConfig {
     fn from_env() -> EditorConfig {
         let mut ec = EditorConfig {
-            orig_termios: Termios::from_fd(*STDIN_RAWFD)
-                .map_err(|_| die("EditorConfig::from_fb/orig_termios"))
-                .unwrap(),
             screenrows: 0,
             screencols: 0,
         };
@@ -45,7 +41,9 @@ impl EditorConfig {
 lazy_static! {
     static ref STDIN_RAWFD: RawFd = std::io::stdin().as_raw_fd();
     static ref STDOUT_RAWFD: RawFd = std::io::stdout().as_raw_fd();
-    static ref E: EditorConfig = EditorConfig::from_env();
+    static ref ORIG_TERMIOS: Termios = Termios::from_fd(*STDIN_RAWFD)
+        .map_err(|_| die("EditorConfig::from_fb/orig_termios"))
+        .unwrap();
 }
 
 /*** terminal ***/
@@ -61,7 +59,7 @@ fn die(s: &str) {
 }
 
 extern "C" fn disable_raw_mode() {
-    if tcsetattr(*STDIN_RAWFD, TCSAFLUSH, &E.orig_termios).is_err() {
+    if tcsetattr(*STDIN_RAWFD, TCSAFLUSH, &*ORIG_TERMIOS).is_err() {
         die("disable_raw_mode/tcsetattr");
     }
 }
@@ -71,7 +69,7 @@ fn enable_raw_mode() {
         atexit(disable_raw_mode);
     };
 
-    let mut raw: Termios = E.orig_termios;
+    let mut raw: Termios = *ORIG_TERMIOS;
     raw.c_iflag &= !(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
     raw.c_oflag &= !(OPOST);
     raw.c_cflag |= CS8;
@@ -88,7 +86,7 @@ fn editor_read_key() -> u8 {
     loop {
         match std::io::stdin().read(&mut buffer) {
             Err(ref e) if e.kind() != ErrorKind::Interrupted => die("editor_read_key/read"),
-            Ok(_) => return buffer[0],
+            Ok(1) => return buffer[0],
             _ => (),
         }
     }
@@ -101,17 +99,24 @@ fn get_cursor_position(rows: &mut u16, cols: &mut u16) -> bool {
     if result.unwrap_or(0) != 4 {
         return false;
     }
-    let mut buffer = [0];
-    while (std::io::stdin().read(&mut buffer).unwrap_or(0) == 1) {
-        let c = buffer[0];
-        if (c.is_ascii_control()) {
-            print!("{}\r\n", c);
-        } else {
-            print!("{} ('{}')\r\n", c, c as char);
+
+    let mut buffer = [0_u8; 32];
+    let mut i = 0;
+    while i < buffer.len() {
+        if std::io::stdin().read(&mut buffer[i..=i]).unwrap_or(0) != 1 {
+            break;
         }
-        flush_stdout();
+        if buffer[i] == b'R' {
+            break;
+        }
+        i += 1;
     }
-    editor_read_key();
+
+    let output = &buffer[1..i];
+    print!("\r\nbuffer[1..i]: '{:?}'\r\n", std::str::from_utf8(output));
+    flush_stdout();
+
+    println!("{}", editor_read_key() as char);
     return false;
 }
 
@@ -147,17 +152,17 @@ fn editor_clear_screen() {
     print!("\x1b[H");
 }
 
-fn editor_refresh_screen() {
+fn editor_refresh_screen(e: &EditorConfig) {
     editor_clear_screen();
-    editor_draw_rows();
+    editor_draw_rows(e);
 
     print!("\x1b[H");
     flush_stdout();
 }
 
 #[allow(clippy::print_with_newline)]
-fn editor_draw_rows() {
-    for _i in 1..E.screenrows {
+fn editor_draw_rows(e: &EditorConfig) {
+    for _i in 1..e.screenrows {
         print!("~\r\n");
     }
 }
@@ -173,11 +178,16 @@ fn editor_process_keypress() {
 
 /*** init ***/
 
+fn init_editor() -> EditorConfig {
+    EditorConfig::from_env()
+}
+
 fn main() {
     enable_raw_mode();
+    let e = init_editor();
 
     loop {
-        editor_refresh_screen();
+        editor_refresh_screen(&e);
         editor_process_keypress();
     }
 }
