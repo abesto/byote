@@ -3,9 +3,12 @@
 #[macro_use]
 extern crate lazy_static;
 
+#[macro_use]
+extern crate simple_error;
+
 use libc::{atexit, ioctl, winsize, TIOCGWINSZ};
 use nix::Error;
-use std::io::{BufRead, ErrorKind, Read, Write};
+use std::io::{ErrorKind, Read, Write};
 use std::os::unix::io::{AsRawFd, RawFd};
 use std::process::exit;
 use termios::{
@@ -14,6 +17,8 @@ use termios::{
 };
 
 /*** defines ***/
+type Result<T> = std::result::Result<T, Box<std::error::Error>>;
+
 fn ctrl_key(k: u8) -> u8 {
     k & 0x1f
 }
@@ -26,15 +31,12 @@ struct EditorConfig {
 }
 
 impl EditorConfig {
-    fn from_env() -> EditorConfig {
-        let mut ec = EditorConfig {
-            screenrows: 0,
-            screencols: 0,
-        };
-        if !get_window_size(&mut ec.screenrows, &mut ec.screencols) {
-            die("EditorConfig::from_fd/get_window_size");
-        }
-        ec
+    fn from_env() -> Result<EditorConfig> {
+        let (rows, cols) = get_window_size()?;
+        Ok(EditorConfig {
+            screenrows: rows,
+            screencols: cols,
+        })
     }
 }
 
@@ -90,18 +92,14 @@ fn editor_read_key() -> u8 {
     }
 }
 
-fn get_cursor_position(rows: &mut u16, cols: &mut u16) -> bool {
-    let result = std::io::stdout().write(b"\x1b[6n");
-    print!("\r\n");
+fn get_cursor_position() -> Result<(u16, u16)> {
+    std::io::stdout().write_all(b"\x1b[6n\r\n")?;
     flush_stdout();
-    if result.unwrap_or(0) != 4 {
-        return false;
-    }
 
     let mut buffer = [0_u8; 32];
     let mut i = 0;
     while i < buffer.len() {
-        if std::io::stdin().read(&mut buffer[i..=i]).unwrap_or(0) != 1 {
+        if !std::io::stdin().read_exact(&mut buffer[i..=i]).is_ok() {
             break;
         }
         if buffer[i] == b'R' {
@@ -112,36 +110,32 @@ fn get_cursor_position(rows: &mut u16, cols: &mut u16) -> bool {
 
     let output = std::str::from_utf8(&buffer[0..i]).unwrap();
     if &output[0..=1] != "\x1b[" {
-        die("get_cursor_position/invalid-response");
+        bail!("get_cursor_position/invalid-response");
     }
 
     let rows_and_cols: Vec<&str> = output[2..i].split(';').collect();
-    if (rows_and_cols.len() != 2) {
-        die("get_cursor_position/split/len");
+    if rows_and_cols.len() != 2 {
+        bail!("get_cursor_position/split/len");
     }
-    *rows = rows_and_cols[0].parse::<u16>().unwrap();
-    *cols = rows_and_cols[1].parse::<u16>().unwrap();
 
-    true
+    Ok((
+        rows_and_cols[0].parse::<u16>()?,
+        rows_and_cols[1].parse::<u16>()?,
+    ))
 }
 
-fn get_window_size(rows: &mut u16, cols: &mut u16) -> bool {
+fn get_window_size() -> Result<(u16, u16)> {
     let mut ws: winsize = unsafe { std::mem::zeroed() };
     let result = unsafe { ioctl(*STDOUT_RAWFD, TIOCGWINSZ, &mut ws) };
     if result == -1 || ws.ws_col == 0 {
         let result = std::io::stdout().write(b"\x1b[999C\x1b[999B");
         flush_stdout();
         match result {
-            Ok(12) => {
-                return get_cursor_position(rows, cols);
-            }
-            _ => return false,
+            Ok(12) => get_cursor_position(),
+            _ => bail!("failed to determine window size"),
         }
-        false
     } else {
-        *cols = ws.ws_col;
-        *rows = ws.ws_row;
-        true
+        Ok((ws.ws_row, ws.ws_col))
     }
 }
 
@@ -149,7 +143,8 @@ fn get_window_size(rows: &mut u16, cols: &mut u16) -> bool {
 fn flush_stdout() {
     std::io::stdout()
         .flush()
-        .unwrap_or_else(|_| die("editor_clear_screen/flush"));
+        .map_err(|e| die(&format!("flush_stdout: {}", e)))
+        .unwrap();
 }
 
 fn editor_clear_screen() {
@@ -185,6 +180,8 @@ fn editor_process_keypress() {
 
 fn init_editor() -> EditorConfig {
     EditorConfig::from_env()
+        .map_err(|e| die(&format!("init_editor: {}", e)))
+        .unwrap()
 }
 
 fn main() {
