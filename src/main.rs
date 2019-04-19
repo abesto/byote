@@ -94,6 +94,27 @@ fn editor_read_key() -> u8 {
     }
 }
 
+fn get_cursor_position(rows: &mut u16, cols: &mut u16) -> bool {
+    let result = std::io::stdout().write(b"\x1b[6n");
+    print!("\r\n");
+    flush_stdout();
+    if result.unwrap_or(0) != 4 {
+        return false;
+    }
+    let mut buffer = [0];
+    while (std::io::stdin().read(&mut buffer).unwrap_or(0) == 1) {
+        let c = buffer[0];
+        if (c.is_ascii_control()) {
+            print!("{}\r\n", c);
+        } else {
+            print!("{} ('{}')\r\n", c, c as char);
+        }
+        flush_stdout();
+    }
+    editor_read_key();
+    return false;
+}
+
 fn get_window_size(rows: &mut u16, cols: &mut u16) -> bool {
     let mut ws: winsize = unsafe { std::mem::zeroed() };
     let result = unsafe { ioctl(*STDOUT_RAWFD, TIOCGWINSZ, &mut ws) };
@@ -102,7 +123,7 @@ fn get_window_size(rows: &mut u16, cols: &mut u16) -> bool {
         flush_stdout();
         match result {
             Ok(12) => {
-                editor_read_key();
+                get_cursor_position(rows, cols);
             }
             _ => return false,
         }
