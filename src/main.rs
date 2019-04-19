@@ -22,16 +22,30 @@ fn ctrl_key(k: u8) -> u8 {
 
 struct EditorConfig {
     orig_termios: Termios,
+    screenrows: u16,
+    screencols: u16,
+}
+
+impl EditorConfig {
+    fn from_env() -> EditorConfig {
+        let mut ec = EditorConfig {
+            orig_termios: Termios::from_fd(*STDIN_RAWFD)
+                .map_err(|_| die("EditorConfig::from_fb/orig_termios"))
+                .unwrap(),
+            screenrows: 0,
+            screencols: 0,
+        };
+        if !get_window_size(&mut ec.screenrows, &mut ec.screencols) {
+            die("EditorConfig::from_fd/get_window_size");
+        }
+        ec
+    }
 }
 
 lazy_static! {
     static ref STDIN_RAWFD: RawFd = std::io::stdin().as_raw_fd();
     static ref STDOUT_RAWFD: RawFd = std::io::stdout().as_raw_fd();
-    static ref E: EditorConfig = EditorConfig {
-        orig_termios: Termios::from_fd(*STDIN_RAWFD)
-            .map_err(|_| die("ORIG_TERMIOS"))
-            .unwrap()
-    };
+    static ref E: EditorConfig = EditorConfig::from_env();
 }
 
 /*** terminal ***/
@@ -116,7 +130,7 @@ fn editor_refresh_screen() {
 
 #[allow(clippy::print_with_newline)]
 fn editor_draw_rows() {
-    for _i in 1..24 {
+    for _i in 1..E.screenrows {
         print!("~\r\n");
     }
 }
