@@ -239,10 +239,10 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
 
 fn editor_move_cursor(key: EditorKey, e: &mut EditorConfig) {
     match key {
-        EditorKey::ArrowLeft => e.cx -= 1,
-        EditorKey::ArrowRight => e.cx += 1,
-        EditorKey::ArrowUp => e.cy -= 1,
-        EditorKey::ArrowDown => e.cy += 1,
+        EditorKey::ArrowLeft if e.cx > 0 => e.cx -= 1,
+        EditorKey::ArrowRight if e.cx < e.screencols - 1 => e.cx += 1,
+        EditorKey::ArrowUp if e.cy > 0 => e.cy -= 1,
+        EditorKey::ArrowDown if e.cy < e.screenrows - 1 => e.cy += 1,
         _ => (),
     }
 }
