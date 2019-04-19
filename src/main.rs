@@ -23,6 +23,8 @@ fn ctrl_key(k: u8) -> u8 {
     k & 0x1f
 }
 
+const BYOTE_VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
+
 /*** data ***/
 
 struct EditorConfig {
@@ -165,7 +167,13 @@ fn editor_refresh_screen(e: &EditorConfig) {
 #[allow(clippy::print_with_newline)]
 fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
     for y in 1..e.screenrows {
-        *buffer += "~";
+        if (y == e.screenrows / 3) {
+            let mut msg = format!("BYOTE -- version {}", BYOTE_VERSION.unwrap_or("unknown"));
+            msg.truncate(e.screencols as usize);
+            *buffer += &msg;
+        } else {
+            *buffer += "~";
+        }
 
         *buffer += "\x1b[K";
         if y < e.screenrows - 1 {
