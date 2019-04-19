@@ -74,18 +74,31 @@ fn editor_read_key() -> u8 {
 }
 
 /*** output ***/
-fn editor_clear_screen() {
-    print!("\x1b[2J");
-    print!("\x1b[H");
+fn flush_stdout() {
     std::io::stdout()
         .flush()
         .unwrap_or_else(|_| die("editor_clear_screen/flush"));
 }
 
-fn editor_refresh_screen() {
-    editor_clear_screen();
+fn editor_clear_screen() {
+    print!("\x1b[2J");
+    print!("\x1b[H");
 }
 
+fn editor_refresh_screen() {
+    editor_clear_screen();
+    editor_draw_rows();
+
+    print!("\x1b[H");
+    flush_stdout();
+}
+
+#[allow(clippy::print_with_newline)]
+fn editor_draw_rows() {
+    for _i in 1..24 {
+        print!("~\r\n");
+    }
+}
 /*** input ***/
 
 fn editor_process_keypress() {
