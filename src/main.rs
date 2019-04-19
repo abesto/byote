@@ -3,9 +3,9 @@
 #[macro_use]
 extern crate lazy_static;
 
-use libc::{atexit, ioctl, perror, winsize, TIOCGWINSZ};
-use std::ffi::CString;
-use std::io::{ErrorKind, Read, Write};
+use libc::{atexit, ioctl, winsize, TIOCGWINSZ};
+use nix::Error;
+use std::io::{BufRead, ErrorKind, Read, Write};
 use std::os::unix::io::{AsRawFd, RawFd};
 use std::process::exit;
 use termios::{
@@ -48,13 +48,11 @@ lazy_static! {
 
 /*** terminal ***/
 
+#[allow(clippy::print_with_newline)]
 fn die(s: &str) {
     editor_clear_screen();
-
-    let cs = CString::new(s).expect("CString::new failed");
-    unsafe {
-        perror(cs.as_ptr() as *const i8);
-    }
+    print!("{}: {}\r\n", s, Error::last().to_string());
+    flush_stdout();
     exit(1);
 }
 
@@ -112,12 +110,19 @@ fn get_cursor_position(rows: &mut u16, cols: &mut u16) -> bool {
         i += 1;
     }
 
-    let output = &buffer[1..i];
-    print!("\r\nbuffer[1..i]: '{:?}'\r\n", std::str::from_utf8(output));
-    flush_stdout();
+    let output = std::str::from_utf8(&buffer[0..i]).unwrap();
+    if &output[0..=1] != "\x1b[" {
+        die("get_cursor_position/invalid-response");
+    }
 
-    println!("{}", editor_read_key() as char);
-    return false;
+    let rows_and_cols: Vec<&str> = output[2..i].split(';').collect();
+    if (rows_and_cols.len() != 2) {
+        die("get_cursor_position/split/len");
+    }
+    *rows = rows_and_cols[0].parse::<u16>().unwrap();
+    *cols = rows_and_cols[1].parse::<u16>().unwrap();
+
+    true
 }
 
 fn get_window_size(rows: &mut u16, cols: &mut u16) -> bool {
@@ -128,7 +133,7 @@ fn get_window_size(rows: &mut u16, cols: &mut u16) -> bool {
         flush_stdout();
         match result {
             Ok(12) => {
-                get_cursor_position(rows, cols);
+                return get_cursor_position(rows, cols);
             }
             _ => return false,
         }
