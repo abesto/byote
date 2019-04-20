@@ -50,6 +50,8 @@ struct EditorConfig {
     screencols: usize,
     cx: usize,
     cy: usize,
+    numrows: usize,
+    row: String,
 }
 
 impl EditorConfig {
@@ -60,6 +62,8 @@ impl EditorConfig {
             screencols: cols,
             cx: 0,
             cy: 0,
+            numrows: 0,
+            row: String::new(),
         })
     }
 }
