@@ -203,6 +203,13 @@ fn get_window_size() -> Result<(usize, usize)> {
     }
 }
 
+/*** file i/o ***/
+
+fn editor_open(e: &mut EditorConfig) {
+    e.numrows = 1;
+    e.row = String::from("Hello, world!");
+}
+
 /*** output ***/
 
 fn flush_stdout() {
@@ -312,6 +319,7 @@ fn init_editor() -> EditorConfig {
 fn main() {
     enable_raw_mode();
     let mut e = init_editor();
+    editor_open(&mut e);
 
     loop {
         editor_refresh_screen(&e);
