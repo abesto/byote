@@ -239,22 +239,27 @@ fn editor_refresh_screen(e: &EditorConfig) {
 #[allow(clippy::print_with_newline)]
 fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
     for y in 0..e.screenrows {
-        if (y == e.screenrows / 3) {
-            let mut msg = format!("BYOTE -- version {}", BYOTE_VERSION.unwrap_or("unknown"));
-            msg.truncate(e.screencols);
-            let mut padding = (e.screencols - msg.len()) / 2;
-            if padding > 0 {
-                *buffer += "~";
-                padding -= 1;
-            }
-            while padding > 0 {
-                *buffer += " ";
-                padding -= 1;
-            }
+        if y >= e.numrows {
+            if y == e.screenrows / 3 {
+                let mut msg = format!("BYOTE -- version {}", BYOTE_VERSION.unwrap_or("unknown"));
+                msg.truncate(e.screencols);
+                let mut padding = (e.screencols - msg.len()) / 2;
+                if padding > 0 {
+                    *buffer += "~";
+                    padding -= 1;
+                }
+                while padding > 0 {
+                    *buffer += " ";
+                    padding -= 1;
+                }
 
-            *buffer += &msg;
+                *buffer += &msg;
+            } else {
+                *buffer += "~";
+            }
         } else {
-            *buffer += "~";
+            let len = std::cmp::min(e.row.len() - 1, e.screencols);
+            *buffer += &e.row[..=len];
         }
 
         *buffer += "\x1b[K";
