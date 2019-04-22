@@ -263,7 +263,8 @@ fn editor_refresh_screen(e: &EditorConfig) {
 #[allow(clippy::print_with_newline)]
 fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
     for y in 0..e.screenrows {
-        if y >= e.rows.len() {
+        let filerow = y + e.rowoff;
+        if filerow >= e.rows.len() {
             if e.rows.is_empty() && y == e.screenrows / 3 {
                 let mut msg = format!("BYOTE -- version {}", BYOTE_VERSION.unwrap_or("unknown"));
                 msg.truncate(e.screencols);
@@ -282,13 +283,12 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
                 *buffer += "~";
             }
         } else {
-            let row = e.rows.get(y).unwrap();
+            let row = &e.rows[filerow];
             if !row.is_empty() {
                 let len = e.screencols.min(row.len() - 1);
                 *buffer += &row[..=len];
             }
         }
-
         *buffer += "\x1b[K";
         if y < e.screenrows - 1 {
             *buffer += "\r\n";
