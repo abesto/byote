@@ -59,6 +59,7 @@ struct EditorConfig {
     cx: usize,
     cy: usize,
     rows: Vec<String>,
+    rowoff: usize,
 }
 
 impl EditorConfig {
@@ -70,6 +71,7 @@ impl EditorConfig {
             cx: 0,
             cy: 0,
             rows: Vec::new(),
+            rowoff: 0,
         })
     }
 }
