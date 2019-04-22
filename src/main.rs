@@ -8,7 +8,7 @@ extern crate simple_error;
 
 use libc::{atexit, ioctl, winsize, TIOCGWINSZ};
 use nix::Error;
-use std::io::{ErrorKind, Read, Write};
+use std::io::{BufRead, ErrorKind, Read, Write};
 use std::os::unix::io::{AsRawFd, RawFd};
 use std::process::exit;
 use termios::{
@@ -222,9 +222,11 @@ fn get_window_size() -> Result<(usize, usize)> {
 
 /*** file i/o ***/
 
-fn editor_open(e: &mut EditorConfig) {
+fn editor_open(e: &mut EditorConfig, filename: &str) {
+    let file = unwrap_or_die("editor_open/open", std::fs::File::open(filename));
+    let reader = std::io::BufReader::new(file);
     e.numrows = 1;
-    e.row = String::from("Hello, world!");
+    e.row = reader.lines().next().unwrap().unwrap();
 }
 
 /*** output ***/
@@ -336,7 +338,10 @@ fn init_editor() -> EditorConfig {
 fn main() {
     enable_raw_mode();
     let mut e = init_editor();
-    editor_open(&mut e);
+
+    if let Some(filename) = std::env::args().nth(1) {
+        editor_open(&mut e, &filename)
+    }
 
     loop {
         editor_refresh_screen(&e);
