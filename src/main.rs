@@ -11,6 +11,7 @@ use nix::Error;
 use std::io::{BufRead, ErrorKind, Read, Write};
 use std::os::unix::io::{AsRawFd, RawFd};
 use std::process::exit;
+use std::vec::Vec;
 use termios::{
     tcsetattr, Termios, BRKINT, CS8, ECHO, ICANON, ICRNL, IEXTEN, INPCK, ISIG, ISTRIP, IXON, OPOST,
     TCSAFLUSH, VMIN, VTIME,
@@ -57,8 +58,7 @@ struct EditorConfig {
     screencols: usize,
     cx: usize,
     cy: usize,
-    numrows: usize,
-    row: String,
+    rows: Vec<String>,
 }
 
 impl EditorConfig {
@@ -69,8 +69,7 @@ impl EditorConfig {
             screencols: cols,
             cx: 0,
             cy: 0,
-            numrows: 0,
-            row: String::new(),
+            rows: Vec::new(),
         })
     }
 }
@@ -220,13 +219,20 @@ fn get_window_size() -> Result<(usize, usize)> {
     }
 }
 
+/*** row operations ***/
+
+fn editor_append_row(e: &mut EditorConfig, s: String) {
+    e.rows.push(s);
+}
+
 /*** file i/o ***/
 
 fn editor_open(e: &mut EditorConfig, filename: &str) {
     let file = unwrap_or_die("editor_open/open", std::fs::File::open(filename));
     let reader = std::io::BufReader::new(file);
-    e.numrows = 1;
-    e.row = reader.lines().next().unwrap().unwrap();
+    for line in reader.lines() {
+        line.map(|l| editor_append_row(e, l)).unwrap();
+    }
 }
 
 /*** output ***/
@@ -255,8 +261,8 @@ fn editor_refresh_screen(e: &EditorConfig) {
 #[allow(clippy::print_with_newline)]
 fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
     for y in 0..e.screenrows {
-        if y >= e.numrows {
-            if e.numrows == 0 && y == e.screenrows / 3 {
+        if y >= e.rows.len() {
+            if e.rows.is_empty() && y == e.screenrows / 3 {
                 let mut msg = format!("BYOTE -- version {}", BYOTE_VERSION.unwrap_or("unknown"));
                 msg.truncate(e.screencols);
                 let mut padding = (e.screencols - msg.len()) / 2;
@@ -274,8 +280,11 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
                 *buffer += "~";
             }
         } else {
-            let len = std::cmp::min(e.row.len() - 1, e.screencols);
-            *buffer += &e.row[..=len];
+            let row = e.rows.get(y).unwrap();
+            if !row.is_empty() {
+                let len = e.screencols.min(row.len() - 1);
+                *buffer += &row[..=len];
+            }
         }
 
         *buffer += "\x1b[K";
