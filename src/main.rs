@@ -239,11 +239,22 @@ fn editor_open(e: &mut EditorConfig, filename: &str) {
 
 /*** output ***/
 
+fn editor_scroll(e: &mut EditorConfig) {
+    if e.cy < e.rowoff {
+        e.rowoff = e.cy;
+    }
+    if e.cy >= e.screenrows + e.rowoff {
+        e.rowoff = e.cy - e.screenrows + 1;
+    }
+}
+
 fn flush_stdout() {
     unwrap_or_die("flush_stdout", std::io::stdout().flush())
 }
 
-fn editor_refresh_screen(e: &EditorConfig) {
+fn editor_refresh_screen(e: &mut EditorConfig) {
+    editor_scroll(e);
+
     let mut buffer = String::new();
 
     buffer += "\x1b[?25l";
@@ -355,7 +366,7 @@ fn main() {
     }
 
     loop {
-        editor_refresh_screen(&e);
+        editor_refresh_screen(&mut e);
         editor_process_keypress(&mut e);
     }
 }
