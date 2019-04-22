@@ -256,7 +256,7 @@ fn editor_refresh_screen(e: &EditorConfig) {
 fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
     for y in 0..e.screenrows {
         if y >= e.numrows {
-            if y == e.screenrows / 3 {
+            if e.numrows == 0 && y == e.screenrows / 3 {
                 let mut msg = format!("BYOTE -- version {}", BYOTE_VERSION.unwrap_or("unknown"));
                 msg.truncate(e.screencols);
                 let mut padding = (e.screencols - msg.len()) / 2;
