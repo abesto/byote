@@ -17,6 +17,13 @@ use termios::{
 };
 
 /*** defines ***/
+fn unwrap_or_die<T, E>(msg: &str, r: std::result::Result<T, E>) -> T
+where
+    E: std::fmt::Debug,
+{
+    r.map_err(|e| die(&format!("{}: {:#?}", msg, e))).unwrap()
+}
+
 type Result<T> = std::result::Result<T, Box<std::error::Error>>;
 
 fn ctrl_key(k: u8) -> u8 {
@@ -71,9 +78,10 @@ impl EditorConfig {
 lazy_static! {
     static ref STDIN_RAWFD: RawFd = std::io::stdin().as_raw_fd();
     static ref STDOUT_RAWFD: RawFd = std::io::stdout().as_raw_fd();
-    static ref ORIG_TERMIOS: Termios = Termios::from_fd(*STDIN_RAWFD)
-        .map_err(|_| die("EditorConfig::from_fb/orig_termios"))
-        .unwrap();
+    static ref ORIG_TERMIOS: Termios = unwrap_or_die(
+        "lazy_static!/Termios::from_fd",
+        Termios::from_fd(*STDIN_RAWFD)
+    );
 }
 
 /*** terminal ***/
@@ -122,14 +130,20 @@ fn editor_read_key() -> EditorKey {
                     // I think we're potentially losing a character or two here? If there's a char
                     // after the escape, but not matching what we expect?
 
-                    let result = std::io::stdin().read(&mut buffer);
-                    if result.is_err() {
+                    let seq = std::io::stdin()
+                        .read(&mut buffer)
+                        .map_err(Box::new)
+                        .map(|n| &buffer[..n]);
+                    if seq.is_err() {
                         return EditorKey::Escape;
                     }
 
-                    let seq = &buffer[..result.unwrap()];
+                    let seq_str = unwrap_or_die(
+                        "editor_read_key/from_utf8",
+                        std::str::from_utf8(seq.unwrap()),
+                    );
 
-                    return match std::str::from_utf8(seq).unwrap() {
+                    return match seq_str {
                         "[A" => EditorKey::ArrowUp,
                         "[B" => EditorKey::ArrowDown,
                         "[C" => EditorKey::ArrowRight,
@@ -172,7 +186,10 @@ fn get_cursor_position() -> Result<(usize, usize)> {
         i += 1;
     }
 
-    let output = std::str::from_utf8(&buffer[0..i]).unwrap();
+    let output = unwrap_or_die(
+        "get_cursor_position/from_utf8",
+        std::str::from_utf8(&buffer[0..i]),
+    );
     if &output[0..=1] != "\x1b[" {
         bail!("get_cursor_position/invalid-response");
     }
@@ -213,10 +230,7 @@ fn editor_open(e: &mut EditorConfig) {
 /*** output ***/
 
 fn flush_stdout() {
-    std::io::stdout()
-        .flush()
-        .map_err(|e| die(&format!("flush_stdout: {}", e)))
-        .unwrap();
+    unwrap_or_die("flush_stdout", std::io::stdout().flush())
 }
 
 fn editor_refresh_screen(e: &EditorConfig) {
@@ -316,9 +330,7 @@ fn editor_process_keypress(e: &mut EditorConfig) {
 /*** init ***/
 
 fn init_editor() -> EditorConfig {
-    EditorConfig::from_env()
-        .map_err(|e| die(&format!("init_editor: {}", e)))
-        .unwrap()
+    unwrap_or_die("init_editor", EditorConfig::from_env())
 }
 
 fn main() {
