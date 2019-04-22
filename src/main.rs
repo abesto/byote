@@ -314,7 +314,7 @@ fn editor_move_cursor(key: &EditorKey, e: &mut EditorConfig) {
         EditorKey::ArrowLeft if e.cx > 0 => e.cx -= 1,
         EditorKey::ArrowRight if e.cx < e.screencols - 1 => e.cx += 1,
         EditorKey::ArrowUp if e.cy > 0 => e.cy -= 1,
-        EditorKey::ArrowDown if e.cy < e.screenrows - 1 => e.cy += 1,
+        EditorKey::ArrowDown if e.cy < e.rows.len() - 1 => e.cy += 1,
         _ => (),
     }
 }
