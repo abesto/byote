@@ -325,7 +325,7 @@ fn editor_process_keypress(e: &mut EditorConfig) {
     let key = editor_read_key();
     match key {
         EditorKey::Char(c) if c == ctrl_key(b'q') => {
-            print!("{}", "\x1b[2J\x1b[H");
+            print!("\x1b[2J\x1b[H");
             flush_stdout();
             exit(0);
         }
