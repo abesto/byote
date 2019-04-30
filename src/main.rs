@@ -248,6 +248,12 @@ fn editor_scroll(e: &mut EditorConfig) {
     if e.cy >= e.screenrows + e.rowoff {
         e.rowoff = e.cy - e.screenrows + 1;
     }
+    if e.cx < e.coloff {
+        e.coloff = e.cx;
+    }
+    if e.cx >= e.coloff + e.screencols {
+        e.coloff = e.cx - e.screencols + 1;
+    }
 }
 
 fn flush_stdout() {
@@ -264,7 +270,7 @@ fn editor_refresh_screen(e: &mut EditorConfig) {
 
     editor_draw_rows(e, &mut buffer);
 
-    buffer += &format!("\x1b[{};{}H", e.cy - e.rowoff + 1, e.cx + 1);
+    buffer += &format!("\x1b[{};{}H", e.cy - e.rowoff + 1, (e.cx - e.coloff) + 1);
 
     buffer += "\x1b[?25h";
 
@@ -297,9 +303,13 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
             }
         } else {
             let row = &e.rows[filerow];
-            if !row.is_empty() {
-                let len = e.screencols.min(row.len() - 1);
-                *buffer += &row[..len];
+            let len = row
+                .len()
+                .checked_sub(e.coloff)
+                .unwrap_or(0)
+                .min(e.screencols);
+            if len > 0 {
+                *buffer += &row[e.coloff..e.coloff + len];
             }
         }
         *buffer += "\x1b[K";
@@ -314,7 +324,7 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
 fn editor_move_cursor(key: &EditorKey, e: &mut EditorConfig) {
     match key {
         EditorKey::ArrowLeft if e.cx > 0 => e.cx -= 1,
-        EditorKey::ArrowRight if e.cx < e.screencols - 1 => e.cx += 1,
+        EditorKey::ArrowRight => e.cx += 1,
         EditorKey::ArrowUp if e.cy > 0 => e.cy -= 1,
         EditorKey::ArrowDown if e.cy < e.rows.len() - 1 => e.cy += 1,
         _ => (),
