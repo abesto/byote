@@ -297,7 +297,7 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
             let row = &e.rows[filerow];
             if !row.is_empty() {
                 let len = e.screencols.min(row.len() - 1);
-                *buffer += &row[..=len];
+                *buffer += &row[..len];
             }
         }
         *buffer += "\x1b[K";
