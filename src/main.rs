@@ -405,8 +405,10 @@ fn editor_process_keypress(e: &mut EditorConfig) {
 
         EditorKey::PageDown | EditorKey::PageUp => {
             let arrow = if key == EditorKey::PageUp {
+                e.cy = e.rowoff;
                 EditorKey::ArrowUp
             } else {
+                e.cy = e.rows.len().min(e.rowoff + e.screenrows - 1);
                 EditorKey::ArrowDown
             };
             for _ in 0..e.screenrows {
