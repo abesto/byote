@@ -231,7 +231,14 @@ fn get_window_size() -> Result<(usize, usize)> {
 /*** row operations ***/
 
 fn editor_update_row(r: &mut ERow) {
-    r.render = r.chars.clone();
+    r.render = r
+        .chars
+        .char_indices()
+        .map(|(i, c)| match c {
+            '\t' => " ".repeat(8 - i % 8),
+            _ => c.to_string(),
+        })
+        .collect();
 }
 
 fn editor_append_row(e: &mut EditorConfig, s: String) {
