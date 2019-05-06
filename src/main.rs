@@ -68,6 +68,7 @@ struct EditorConfig {
     rows: Vec<ERow>,
     rowoff: usize,
     coloff: usize,
+    filename: Option<String>,
 }
 
 impl EditorConfig {
@@ -82,6 +83,7 @@ impl EditorConfig {
             rows: Vec::new(),
             rowoff: 0,
             coloff: 0,
+            filename: None,
         })
     }
 }
@@ -267,6 +269,7 @@ fn editor_append_row(e: &mut EditorConfig, s: String) {
 /*** file i/o ***/
 
 fn editor_open(e: &mut EditorConfig, filename: &str) {
+    e.filename = Some(filename.into());
     let file = unwrap_or_die("editor_open/open", std::fs::File::open(filename));
     let reader = std::io::BufReader::new(file);
     for line in reader.lines() {
