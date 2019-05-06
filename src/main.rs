@@ -237,7 +237,7 @@ fn editor_row_cx_to_rx(r: &ERow, cx: usize) -> usize {
     let mut rx: usize = 0;
     for c in r.chars.chars().take(cx) {
         rx += match c {
-            '\t' => (BYOTE_TAB_STOP - 1) - (rx % BYOTE_TAB_STOP),
+            '\t' => BYOTE_TAB_STOP - (rx % BYOTE_TAB_STOP),
             _ => 1,
         }
     }
