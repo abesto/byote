@@ -235,7 +235,7 @@ fn get_window_size() -> Result<(usize, usize)> {
 
 fn editor_row_cx_to_rx(r: &ERow, cx: usize) -> usize {
     let mut rx: usize = 0;
-    for (i, c) in r.chars.char_indices() {
+    for c in r.chars.chars().take(cx) {
         rx += match c {
             '\t' => (BYOTE_TAB_STOP - 1) - (rx % BYOTE_TAB_STOP),
             _ => 1,
@@ -277,7 +277,11 @@ fn editor_open(e: &mut EditorConfig, filename: &str) {
 /*** output ***/
 
 fn editor_scroll(e: &mut EditorConfig) {
-    e.rx = e.cx;
+    e.rx = e
+        .rows
+        .get(e.cy)
+        .map(|r| editor_row_cx_to_rx(r, e.cx))
+        .unwrap_or(0);
 
     if e.cy < e.rowoff {
         e.rowoff = e.cy;
