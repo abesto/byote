@@ -417,7 +417,11 @@ fn editor_process_keypress(e: &mut EditorConfig) {
         }
 
         EditorKey::Home => e.cx = 0,
-        EditorKey::End => e.cx = e.screencols - 1,
+        EditorKey::End => {
+            if e.cy < e.rows.len() {
+                e.cx = e.rows[e.cy].chars.len();
+            }
+        }
 
         _ => (),
     }
