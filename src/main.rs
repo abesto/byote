@@ -264,7 +264,7 @@ fn editor_update_row(r: &mut ERow) {
 
 fn editor_append_row(e: &mut EditorConfig, s: &str) {
     let mut row = ERow {
-        chars: s,
+        chars: String::from(s),
         render: String::new(),
     };
     editor_update_row(&mut row);
@@ -480,6 +480,7 @@ fn editor_process_keypress(e: &mut EditorConfig) {
             }
         }
 
+        EditorKey::Char(c) => editor_insert_char(e, c.into()),
         _ => (),
     }
 }
