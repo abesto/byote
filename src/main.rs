@@ -290,6 +290,13 @@ fn editor_insert_char(e: &mut EditorConfig, c: char) {
 
 /*** file i/o ***/
 
+fn editor_rows_to_string(e: &EditorConfig) -> String {
+    e.rows
+        .iter()
+        .map(|r| &r.chars)
+        .fold(String::new(), |a, b| a + "\n" + b)
+}
+
 fn editor_open(e: &mut EditorConfig, filename: &str) {
     e.filename = Some(filename.into());
     let file = unwrap_or_die("editor_open/open", std::fs::File::open(filename));
