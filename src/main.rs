@@ -319,6 +319,7 @@ fn editor_refresh_screen(e: &mut EditorConfig) {
 
     editor_draw_rows(e, &mut buffer);
     editor_draw_status_bar(e, &mut buffer);
+    editor_draw_message_bar(e, &mut buffer);
 
     buffer += &format!("\x1b[{};{}H", e.cy - e.rowoff + 1, (e.rx - e.coloff) + 1);
 
@@ -391,6 +392,14 @@ fn editor_draw_status_bar(e: &EditorConfig, buffer: &mut String) {
     *buffer += &rstatus;
     *buffer += "\x1b[m";
     *buffer += "\r\n";
+}
+
+fn editor_draw_message_bar(e: &EditorConfig, buffer: &mut String) {
+    *buffer += "\x1b[K";
+    if !e.statusmsg.is_empty() && Instant::now() < e.statusmsg_time + Duration::from_secs(5) {
+        let cropped_msg: String = e.statusmsg.chars().take(e.screencols).collect();
+        *buffer += &cropped_msg;
+    }
 }
 
 /*** input ***/
