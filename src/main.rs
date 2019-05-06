@@ -296,7 +296,7 @@ fn editor_refresh_screen(e: &mut EditorConfig) {
 
     editor_draw_rows(e, &mut buffer);
 
-    buffer += &format!("\x1b[{};{}H", e.cy - e.rowoff + 1, (e.cx - e.coloff) + 1);
+    buffer += &format!("\x1b[{};{}H", e.cy - e.rowoff + 1, (e.rx - e.coloff) + 1);
 
     buffer += "\x1b[?25h";
 
