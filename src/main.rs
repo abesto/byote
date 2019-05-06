@@ -428,7 +428,12 @@ fn editor_draw_status_bar(e: &EditorConfig, buffer: &mut String) {
         .clone()
         .map(|s| s.chars().take(20).collect())
         .unwrap_or_else(|| "[No Name]".into());
-    let status = format!("{} - {} lines", shown_filename, e.rows.len());
+    let status = format!(
+        "{} - {} lines {}",
+        shown_filename,
+        e.rows.len(),
+        if e.dirty { "(modified)" } else { "" }
+    );
     let rstatus = format!("{}/{}", e.cy + 1, e.rows.len());
 
     *buffer += &status[..=e.screencols.min(status.len() - 1)];
