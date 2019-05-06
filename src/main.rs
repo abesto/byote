@@ -78,7 +78,7 @@ impl EditorConfig {
     fn from_env() -> Result<EditorConfig> {
         let (rows, cols) = get_window_size()?;
         Ok(EditorConfig {
-            screenrows: rows - 1,
+            screenrows: rows - 2,
             screencols: cols,
             cx: 0,
             rx: 0,
@@ -390,6 +390,7 @@ fn editor_draw_status_bar(e: &EditorConfig, buffer: &mut String) {
     *buffer += &" ".repeat(e.screencols - status.len() - rstatus.len());
     *buffer += &rstatus;
     *buffer += "\x1b[m";
+    *buffer += "\r\n";
 }
 
 /*** input ***/
