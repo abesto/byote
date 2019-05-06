@@ -74,7 +74,7 @@ impl EditorConfig {
     fn from_env() -> Result<EditorConfig> {
         let (rows, cols) = get_window_size()?;
         Ok(EditorConfig {
-            screenrows: rows,
+            screenrows: rows - 1,
             screencols: cols,
             cx: 0,
             rx: 0,
@@ -355,9 +355,7 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
             }
         }
         *buffer += "\x1b[K";
-        if y < e.screenrows - 1 {
-            *buffer += "\r\n";
-        }
+        *buffer += "\r\n";
     }
 }
 
