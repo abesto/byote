@@ -318,13 +318,13 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
         } else {
             let row = &e.rows[filerow];
             let len = row
-                .chars
+                .render
                 .len()
                 .checked_sub(e.coloff)
                 .unwrap_or(0)
                 .min(e.screencols);
             if len > 0 {
-                *buffer += &row.chars[e.coloff..e.coloff + len];
+                *buffer += &row.render[e.coloff..e.coloff + len];
             }
         }
         *buffer += "\x1b[K";
