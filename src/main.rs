@@ -52,6 +52,7 @@ enum EditorKey {
 
 const BYOTE_VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 const BYOTE_TAB_STOP: usize = 8;
+const BYOTE_QUIT_TIMES: u8 = 3;
 
 const BACKSPACE: u8 = 127;
 
@@ -70,6 +71,7 @@ struct EditorConfig {
     cy: usize,
     rows: Vec<ERow>,
     dirty: bool,
+    quit_times: u8,
     rowoff: usize,
     coloff: usize,
     filename: Option<String>,
@@ -88,6 +90,7 @@ impl EditorConfig {
             cy: 0,
             rows: Vec::new(),
             dirty: false,
+            quit_times: 3,
             rowoff: 0,
             coloff: 0,
             filename: None,
@@ -492,6 +495,17 @@ fn editor_process_keypress(e: &mut EditorConfig) {
         ),
 
         EditorKey::Char(c) if c == ctrl_key(b'q') => {
+            if e.dirty && e.quit_times > 0 {
+                editor_set_status_message(
+                    e,
+                    &format!(
+                        "WARNING!!! File has unsaved changes. Press Ctrl-Q {} more times to quit.",
+                        e.quit_times
+                    ),
+                );
+                e.quit_times -= 1;
+                return;
+            }
             print!("\x1b[2J\x1b[H");
             flush_stdout();
             exit(0);
@@ -536,6 +550,8 @@ fn editor_process_keypress(e: &mut EditorConfig) {
         EditorKey::Char(c) => editor_insert_char(e, c.into()),
         _ => (),
     }
+
+    e.quit_times = BYOTE_QUIT_TIMES;
 }
 
 /*** init ***/
