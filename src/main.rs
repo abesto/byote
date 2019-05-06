@@ -53,12 +53,17 @@ const BYOTE_VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 
 /*** data ***/
 
+struct ERow {
+    chars: String,
+    render: String,
+}
+
 struct EditorConfig {
     screenrows: usize,
     screencols: usize,
     cx: usize,
     cy: usize,
-    rows: Vec<String>,
+    rows: Vec<ERow>,
     rowoff: usize,
     coloff: usize,
 }
@@ -226,7 +231,10 @@ fn get_window_size() -> Result<(usize, usize)> {
 /*** row operations ***/
 
 fn editor_append_row(e: &mut EditorConfig, s: String) {
-    e.rows.push(s);
+    e.rows.push(ERow {
+        chars: s,
+        render: String::new(),
+    });
 }
 
 /*** file i/o ***/
@@ -304,12 +312,13 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
         } else {
             let row = &e.rows[filerow];
             let len = row
+                .chars
                 .len()
                 .checked_sub(e.coloff)
                 .unwrap_or(0)
                 .min(e.screencols);
             if len > 0 {
-                *buffer += &row[e.coloff..e.coloff + len];
+                *buffer += &row.chars[e.coloff..e.coloff + len];
             }
         }
         *buffer += "\x1b[K";
@@ -322,13 +331,13 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
 /*** input ***/
 
 fn editor_move_cursor(key: &EditorKey, e: &mut EditorConfig) {
-    let row_old = e.rows.get(e.cy);
-    let rowlen_old = row_old.map(String::len).unwrap_or(0);
+    let row_old = e.rows.get(e.cy).map(|r| &r.chars);
+    let rowlen_old = row_old.map(|s| s.len()).unwrap_or(0);
     match key {
         EditorKey::ArrowLeft if e.cx > 0 => e.cx -= 1,
         EditorKey::ArrowLeft if e.cy > 0 => {
             e.cy -= 1;
-            e.cx = e.rows[e.cy].len();
+            e.cx = e.rows[e.cy].chars.len();
         }
         EditorKey::ArrowRight if e.cx < rowlen_old => e.cx += 1,
         EditorKey::ArrowRight if row_old.is_some() && rowlen_old == e.cx => {
@@ -340,8 +349,8 @@ fn editor_move_cursor(key: &EditorKey, e: &mut EditorConfig) {
         _ => (),
     }
 
-    let row_new = e.rows.get(e.cy);
-    let rowlen_new = row_new.map(String::len).unwrap_or(0);
+    let row_new = e.rows.get(e.cy).map(|r| &r.chars);
+    let rowlen_new = row_new.map(|s| s.len()).unwrap_or(0);
     if e.cx > rowlen_new {
         e.cx = rowlen_new;
     }
