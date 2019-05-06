@@ -541,11 +541,10 @@ fn editor_process_keypress(e: &mut EditorConfig) {
         }
 
         EditorKey::Delete => {
-            // TODO
+            editor_move_cursor(&EditorKey::ArrowRight, e);
+            editor_del_char(e);
         }
-        EditorKey::Char(c) if c == BACKSPACE || c == ctrl_key(b'h') => {
-            // TODO
-        }
+        EditorKey::Char(c) if c == BACKSPACE || c == ctrl_key(b'h') => editor_del_char(e),
 
         EditorKey::PageDown | EditorKey::PageUp => {
             let arrow = if key == EditorKey::PageUp {
