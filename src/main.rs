@@ -329,6 +329,13 @@ fn editor_refresh_screen(e: &mut EditorConfig) {
     flush_stdout();
 }
 
+fn editor_set_status_message(e: &mut EditorConfig, msg: &str) {
+    // Not taking a format string, because unlike C, variadics are hard, and also format! is easy
+    // to use at the call-site
+    e.statusmsg = msg.into();
+    e.statusmsg_time = Instant::now();
+}
+
 #[allow(clippy::print_with_newline)]
 fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
     for y in 0..e.screenrows {
@@ -460,6 +467,8 @@ fn init_editor() -> EditorConfig {
 fn main() {
     enable_raw_mode();
     let mut e = init_editor();
+
+    editor_set_status_message(&mut e, "HELP: Ctrl-Q = quit");
 
     if let Some(filename) = std::env::args().nth(1) {
         editor_open(&mut e, &filename)
