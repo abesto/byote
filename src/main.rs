@@ -233,6 +233,17 @@ fn get_window_size() -> Result<(usize, usize)> {
 
 /*** row operations ***/
 
+fn editor_row_cx_to_rx(r: &ERow, cx: usize) -> usize {
+    let mut rx: usize = 0;
+    for (i, c) in r.chars.char_indices() {
+        rx += match c {
+            '\t' => (BYOTE_TAB_STOP - 1) - (rx % BYOTE_TAB_STOP),
+            _ => 1,
+        }
+    }
+    rx
+}
+
 fn editor_update_row(r: &mut ERow) {
     r.render = r
         .chars
