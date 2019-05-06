@@ -306,13 +306,18 @@ fn editor_open(e: &mut EditorConfig, filename: &str) {
     }
 }
 
-fn editor_save(e: &EditorConfig) {
+fn editor_save(e: &mut EditorConfig) {
     match &e.filename {
         Some(filename) => {
             let buf = editor_rows_to_string(e);
-            let mut file = unwrap_or_die("editor_save/open", std::fs::File::create(filename));
-            unwrap_or_die("editor_save/set_len", file.set_len(buf.len() as u64));
-            unwrap_or_die("editor_save/write", file.write(buf.as_bytes()));
+            editor_set_status_message(
+                e,
+                &std::fs::File::create(filename)
+                    .and_then(|file| file.set_len(buf.len() as u64).map(|_| file))
+                    .and_then(|mut file| file.write(buf.as_bytes()))
+                    .map(|n| format!("{} bytes written to disk", n))
+                    .unwrap_or_else(|e| format!("Can't save! I/O error: {}", e)),
+            )
         }
         None => (),
     }
