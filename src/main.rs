@@ -303,6 +303,14 @@ fn editor_insert_char(e: &mut EditorConfig, c: char) {
     e.cx += 1;
 }
 
+fn editor_del_char(e: &mut EditorConfig) {
+    if e.cy == e.rows.len() {
+        return;
+    }
+    editor_row_del_char(e, e.cx - 1);
+    e.cx -= 1;
+}
+
 /*** file i/o ***/
 
 fn editor_rows_to_string(e: &EditorConfig) -> String {
