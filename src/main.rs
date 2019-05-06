@@ -325,6 +325,10 @@ fn editor_move_cursor(key: &EditorKey, e: &mut EditorConfig) {
     let row_old = e.rows.get(e.cy);
     match key {
         EditorKey::ArrowLeft if e.cx > 0 => e.cx -= 1,
+        EditorKey::ArrowLeft if e.cy > 0 => {
+            e.cy -= 1;
+            e.cx = e.rows[e.cy].len();
+        }
         EditorKey::ArrowRight if e.cx < row_old.map(String::len).unwrap_or(0) => e.cx += 1,
         EditorKey::ArrowUp if e.cy > 0 => e.cy -= 1,
         EditorKey::ArrowDown if e.cy < e.rows.len() - 1 => e.cy += 1,
