@@ -11,6 +11,7 @@ use nix::Error;
 use std::io::{BufRead, ErrorKind, Read, Write};
 use std::os::unix::io::{AsRawFd, RawFd};
 use std::process::exit;
+use std::time::{Duration, Instant};
 use std::vec::Vec;
 use termios::{
     tcsetattr, Termios, BRKINT, CS8, ECHO, ICANON, ICRNL, IEXTEN, INPCK, ISIG, ISTRIP, IXON, OPOST,
@@ -69,6 +70,8 @@ struct EditorConfig {
     rowoff: usize,
     coloff: usize,
     filename: Option<String>,
+    statusmsg: String,
+    statusmsg_time: Instant,
 }
 
 impl EditorConfig {
@@ -84,6 +87,8 @@ impl EditorConfig {
             rowoff: 0,
             coloff: 0,
             filename: None,
+            statusmsg: String::new(),
+            statusmsg_time: Instant::now(),
         })
     }
 }
