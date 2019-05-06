@@ -271,6 +271,12 @@ fn editor_append_row(e: &mut EditorConfig, s: String) {
     e.rows.push(row);
 }
 
+fn editor_row_insert_char(row: &mut ERow, at: usize, c: char) {
+    let real_at = at.max(0).min(row.chars.len());
+    row.chars.insert(at, c);
+    editor_update_row(row);
+}
+
 /*** file i/o ***/
 
 fn editor_open(e: &mut EditorConfig, filename: &str) {
