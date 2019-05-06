@@ -536,7 +536,7 @@ fn main() {
     enable_raw_mode();
     let mut e = init_editor();
 
-    editor_set_status_message(&mut e, "HELP: Ctrl-Q = quit");
+    editor_set_status_message(&mut e, "HELP: Ctrl-S = save | Ctrl-Q = quit");
 
     if let Some(filename) = std::env::args().nth(1) {
         editor_open(&mut e, &filename)
