@@ -266,17 +266,19 @@ fn editor_open(e: &mut EditorConfig, filename: &str) {
 /*** output ***/
 
 fn editor_scroll(e: &mut EditorConfig) {
+    e.rx = e.cx;
+
     if e.cy < e.rowoff {
         e.rowoff = e.cy;
     }
     if e.cy >= e.screenrows + e.rowoff {
         e.rowoff = e.cy - e.screenrows + 1;
     }
-    if e.cx < e.coloff {
-        e.coloff = e.cx;
+    if e.rx < e.coloff {
+        e.coloff = e.rx;
     }
-    if e.cx >= e.coloff + e.screencols {
-        e.coloff = e.cx - e.screencols + 1;
+    if e.rx >= e.coloff + e.screencols {
+        e.coloff = e.rx - e.screencols + 1;
     }
 }
 
