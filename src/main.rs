@@ -306,6 +306,18 @@ fn editor_open(e: &mut EditorConfig, filename: &str) {
     }
 }
 
+fn editor_save(e: &EditorConfig) {
+    match &e.filename {
+        Some(filename) => {
+            let buf = editor_rows_to_string(e);
+            let mut file = unwrap_or_die("editor_save/open", std::fs::File::create(filename));
+            unwrap_or_die("editor_save/set_len", file.set_len(buf.len() as u64));
+            unwrap_or_die("editor_save/write", file.write(buf.as_bytes()));
+        }
+        None => (),
+    }
+}
+
 /*** output ***/
 
 fn editor_scroll(e: &mut EditorConfig) {
