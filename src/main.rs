@@ -323,22 +323,27 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
 
 fn editor_move_cursor(key: &EditorKey, e: &mut EditorConfig) {
     let row_old = e.rows.get(e.cy);
+    let rowlen_old = row_old.map(String::len).unwrap_or(0);
     match key {
         EditorKey::ArrowLeft if e.cx > 0 => e.cx -= 1,
         EditorKey::ArrowLeft if e.cy > 0 => {
             e.cy -= 1;
             e.cx = e.rows[e.cy].len();
         }
-        EditorKey::ArrowRight if e.cx < row_old.map(String::len).unwrap_or(0) => e.cx += 1,
+        EditorKey::ArrowRight if e.cx < rowlen_old => e.cx += 1,
+        EditorKey::ArrowRight if row_old.is_some() && rowlen_old == e.cx => {
+            e.cy += 1;
+            e.cx = 0;
+        }
         EditorKey::ArrowUp if e.cy > 0 => e.cy -= 1,
         EditorKey::ArrowDown if e.cy < e.rows.len() - 1 => e.cy += 1,
         _ => (),
     }
 
     let row_new = e.rows.get(e.cy);
-    let row_len = row_new.map(String::len).unwrap_or(0);
-    if e.cx > row_len {
-        e.cx = row_len;
+    let rowlen_new = row_new.map(String::len).unwrap_or(0);
+    if e.cx > rowlen_new {
+        e.cx = rowlen_new;
     }
 }
 
