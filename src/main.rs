@@ -310,6 +310,7 @@ fn editor_refresh_screen(e: &mut EditorConfig) {
     buffer += "\x1b[H";
 
     editor_draw_rows(e, &mut buffer);
+    editor_draw_statusline(e, &mut buffer);
 
     buffer += &format!("\x1b[{};{}H", e.cy - e.rowoff + 1, (e.rx - e.coloff) + 1);
 
@@ -357,6 +358,12 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
         *buffer += "\x1b[K";
         *buffer += "\r\n";
     }
+}
+
+fn editor_draw_statusline(e: &EditorConfig, buffer: &mut String) {
+    *buffer += "\x1b[7m";
+    *buffer += &" ".repeat(e.screencols);
+    *buffer += "\x1b[m";
 }
 
 /*** input ***/
