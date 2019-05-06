@@ -230,11 +230,17 @@ fn get_window_size() -> Result<(usize, usize)> {
 
 /*** row operations ***/
 
+fn editor_update_row(r: &mut ERow) {
+    r.render = r.chars.clone();
+}
+
 fn editor_append_row(e: &mut EditorConfig, s: String) {
-    e.rows.push(ERow {
+    let mut row = ERow {
         chars: s,
         render: String::new(),
-    });
+    };
+    editor_update_row(&mut row);
+    e.rows.push(row);
 }
 
 /*** file i/o ***/
