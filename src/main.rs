@@ -273,11 +273,14 @@ fn editor_append_row(e: &mut EditorConfig, s: &str) {
     };
     editor_update_row(&mut row);
     e.rows.push(row);
+    e.dirty = true;
 }
 
-fn editor_row_insert_char(row: &mut ERow, at: usize, c: char) {
+fn editor_row_insert_char(e: &mut EditorConfig, at: usize, c: char) {
+    let row = &mut e.rows[e.cy];
     row.chars.insert(at.max(0).min(row.chars.len()), c);
     editor_update_row(row);
+    e.dirty = true;
 }
 
 /*** editor operations ***/
@@ -286,7 +289,7 @@ fn editor_insert_char(e: &mut EditorConfig, c: char) {
     if e.cy == e.rows.len() {
         editor_append_row(e, "");
     }
-    editor_row_insert_char(&mut e.rows[e.cy], e.cx, c);
+    editor_row_insert_char(e, e.cx, c);
     e.cx += 1;
 }
 
