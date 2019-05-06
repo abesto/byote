@@ -371,10 +371,12 @@ fn editor_draw_status_bar(e: &EditorConfig, buffer: &mut String) {
         .clone()
         .map(|s| s.chars().take(20).collect())
         .unwrap_or_else(|| "[No Name]".into());
-
     let status = format!("{} - {} lines", shown_filename, e.rows.len());
+    let rstatus = format!("{}/{}", e.cy + 1, e.rows.len());
+
     *buffer += &status[..=e.screencols.min(status.len() - 1)];
-    *buffer += &" ".repeat(e.screencols - status.len());
+    *buffer += &" ".repeat(e.screencols - status.len() - rstatus.len());
+    *buffer += &rstatus;
     *buffer += "\x1b[m";
 }
 
