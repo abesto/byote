@@ -50,6 +50,7 @@ enum EditorKey {
 }
 
 const BYOTE_VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
+const BYOTE_TAB_STOP: usize = 8;
 
 /*** data ***/
 
@@ -235,7 +236,7 @@ fn editor_update_row(r: &mut ERow) {
         .chars
         .char_indices()
         .map(|(i, c)| match c {
-            '\t' => " ".repeat(8 - i % 8),
+            '\t' => " ".repeat(BYOTE_TAB_STOP - i % BYOTE_TAB_STOP),
             _ => c.to_string(),
         })
         .collect();
