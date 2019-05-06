@@ -295,6 +295,12 @@ fn editor_row_insert_char(e: &mut EditorConfig, at: usize, c: char) {
     e.dirty = true;
 }
 
+fn editor_row_append_string(e: &mut EditorConfig, row: &mut ERow, s: &str) {
+    row.chars += s;
+    editor_update_row(row);
+    e.dirty = true;
+}
+
 fn editor_row_del_char(e: &mut EditorConfig, at: usize) {
     let row = &mut e.rows[e.cy];
     row.chars.remove(at.max(0).min(row.chars.len()));
