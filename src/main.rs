@@ -293,8 +293,9 @@ fn editor_insert_char(e: &mut EditorConfig, c: char) {
 fn editor_rows_to_string(e: &EditorConfig) -> String {
     e.rows
         .iter()
+        .skip(1)
         .map(|r| &r.chars)
-        .fold(String::new(), |a, b| a + "\n" + b)
+        .fold(e.rows[0].chars.clone(), |a, b| a + "\n" + b)
 }
 
 fn editor_open(e: &mut EditorConfig, filename: &str) {
