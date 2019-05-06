@@ -262,7 +262,7 @@ fn editor_update_row(r: &mut ERow) {
         .collect();
 }
 
-fn editor_append_row(e: &mut EditorConfig, s: String) {
+fn editor_append_row(e: &mut EditorConfig, s: &str) {
     let mut row = ERow {
         chars: s,
         render: String::new(),
@@ -277,6 +277,16 @@ fn editor_row_insert_char(row: &mut ERow, at: usize, c: char) {
     editor_update_row(row);
 }
 
+/*** editor operations ***/
+
+fn editor_insert_char(e: &mut EditorConfig, c: char) {
+    if e.cy == e.rows.len() {
+        editor_append_row(e, "");
+    }
+    editor_row_insert_char(&mut e.rows[e.cy], e.cx, c);
+    e.cx += 1;
+}
+
 /*** file i/o ***/
 
 fn editor_open(e: &mut EditorConfig, filename: &str) {
@@ -284,7 +294,7 @@ fn editor_open(e: &mut EditorConfig, filename: &str) {
     let file = unwrap_or_die("editor_open/open", std::fs::File::open(filename));
     let reader = std::io::BufReader::new(file);
     for line in reader.lines() {
-        line.map(|l| editor_append_row(e, l)).unwrap();
+        line.map(|l| editor_append_row(e, &l)).unwrap();
     }
 }
 
