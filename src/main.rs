@@ -479,6 +479,8 @@ fn editor_process_keypress(e: &mut EditorConfig) {
             exit(0);
         }
 
+        EditorKey::Char(c) if c == ctrl_key(b's') => editor_save(e),
+
         EditorKey::ArrowDown
         | EditorKey::ArrowUp
         | EditorKey::ArrowLeft
