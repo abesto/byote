@@ -310,20 +310,22 @@ fn editor_open(e: &mut EditorConfig, filename: &str) {
     for line in reader.lines() {
         line.map(|l| editor_append_row(e, &l)).unwrap();
     }
+    e.dirty = false;
 }
 
 fn editor_save(e: &mut EditorConfig) {
     match &e.filename {
         Some(filename) => {
             let buf = editor_rows_to_string(e);
-            editor_set_status_message(
-                e,
-                &std::fs::File::create(filename)
-                    .and_then(|file| file.set_len(buf.len() as u64).map(|_| file))
-                    .and_then(|mut file| file.write(buf.as_bytes()))
-                    .map(|n| format!("{} bytes written to disk", n))
-                    .unwrap_or_else(|e| format!("Can't save! I/O error: {}", e)),
-            )
+            let msg = &std::fs::File::create(filename)
+                .and_then(|file| file.set_len(buf.len() as u64).map(|_| file))
+                .and_then(|mut file| file.write(buf.as_bytes()))
+                .map(|n| {
+                    e.dirty = false;
+                    format!("{} bytes written to disk", n)
+                })
+                .unwrap_or_else(|e| format!("Can't save! I/O error: {}", e));
+            editor_set_status_message(e, msg);
         }
         None => (),
     }
