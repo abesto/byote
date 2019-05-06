@@ -53,6 +53,8 @@ enum EditorKey {
 const BYOTE_VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 const BYOTE_TAB_STOP: usize = 8;
 
+const BACKSPACE: u8 = 127;
+
 /*** data ***/
 
 struct ERow {
@@ -272,8 +274,7 @@ fn editor_append_row(e: &mut EditorConfig, s: &str) {
 }
 
 fn editor_row_insert_char(row: &mut ERow, at: usize, c: char) {
-    let real_at = at.max(0).min(row.chars.len());
-    row.chars.insert(at, c);
+    row.chars.insert(at.max(0).min(row.chars.len()), c);
     editor_update_row(row);
 }
 
@@ -449,6 +450,10 @@ fn editor_move_cursor(key: &EditorKey, e: &mut EditorConfig) {
 fn editor_process_keypress(e: &mut EditorConfig) {
     let key = editor_read_key();
     match key {
+        EditorKey::Char(b'\r') => (
+            // TODO 
+        ),
+
         EditorKey::Char(c) if c == ctrl_key(b'q') => {
             print!("\x1b[2J\x1b[H");
             flush_stdout();
@@ -459,6 +464,20 @@ fn editor_process_keypress(e: &mut EditorConfig) {
         | EditorKey::ArrowUp
         | EditorKey::ArrowLeft
         | EditorKey::ArrowRight => editor_move_cursor(&key, e),
+
+        EditorKey::Home => e.cx = 0,
+        EditorKey::End => {
+            if e.cy < e.rows.len() {
+                e.cx = e.rows[e.cy].chars.len();
+            }
+        }
+
+        EditorKey::Delete => {
+            // TODO
+        }
+        EditorKey::Char(c) if c == BACKSPACE || c == ctrl_key(b'h') => {
+            // TODO
+        }
 
         EditorKey::PageDown | EditorKey::PageUp => {
             let arrow = if key == EditorKey::PageUp {
@@ -473,12 +492,7 @@ fn editor_process_keypress(e: &mut EditorConfig) {
             }
         }
 
-        EditorKey::Home => e.cx = 0,
-        EditorKey::End => {
-            if e.cy < e.rows.len() {
-                e.cx = e.rows[e.cy].chars.len();
-            }
-        }
+        EditorKey::Char(c) if c == ctrl_key(b'l') || c == b'\x1b' => (),
 
         EditorKey::Char(c) => editor_insert_char(e, c.into()),
         _ => (),
