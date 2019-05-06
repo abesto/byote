@@ -295,14 +295,15 @@ fn editor_row_insert_char(e: &mut EditorConfig, at: usize, c: char) {
     e.dirty = true;
 }
 
-fn editor_row_append_string(e: &mut EditorConfig, row: &mut ERow, s: &str) {
+fn editor_row_append_string(e: &mut EditorConfig, at_row: usize, s: &str) {
+    let row = &mut e.rows[at_row];
     row.chars += s;
     editor_update_row(row);
     e.dirty = true;
 }
 
-fn editor_row_del_char(e: &mut EditorConfig, at: usize) {
-    let row = &mut e.rows[e.cy];
+fn editor_row_del_char(e: &mut EditorConfig, at_row: usize, at: usize) {
+    let row = &mut e.rows[at_row];
     row.chars.remove(at.max(0).min(row.chars.len()));
     editor_update_row(row);
     e.dirty = true;
@@ -322,8 +323,21 @@ fn editor_del_char(e: &mut EditorConfig) {
     if e.cy == e.rows.len() {
         return;
     }
-    editor_row_del_char(e, e.cx - 1);
-    e.cx -= 1;
+    if e.cx == 0 && e.cy == 0 {
+        return;
+    }
+    if e.cx > 0 {
+        editor_row_del_char(e, e.cy, e.cx - 1);
+        e.cx -= 1;
+    } else {
+        e.cx = e.rows[e.cy - 1].chars.len();
+        // This is clunky due to the fact that all of `e` needs to be borrowed,
+        // and we can only borrow it mutably once, and we can't mix mutable
+        // and immutable borrows of it. Note that `&e.blah` tries to borrow `e` fully.
+        editor_row_append_string(e, e.cy - 1, &e.rows[e.cy].chars.clone());
+        editor_del_row(e, e.cy);
+        e.cy -= 1;
+    }
 }
 
 /*** file i/o ***/
