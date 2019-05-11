@@ -84,6 +84,7 @@ bitflags! {
 struct EditorSyntax {
     filetype: &'static str,
     filematch: &'static [&'static str],
+    keywords: &'static [&'static str],
     singleline_comment_start: Option<&'static str>,
     flags: HL,
 }
@@ -172,6 +173,33 @@ lazy_static! {
 static HLDB: [EditorSyntax; 1] = [EditorSyntax {
     filetype: "c",
     filematch: &[".c", ".h", ".cpp"],
+    keywords: &[
+        // Keyword1
+        "switch",
+        "if",
+        "while",
+        "for",
+        "break",
+        "continue",
+        "return",
+        "else",
+        "struct",
+        "union",
+        "typedef",
+        "static",
+        "enum",
+        "class",
+        "case",
+        // Keyword2
+        "int|",
+        "long|",
+        "double|",
+        "float|",
+        "char|",
+        "unsigned|",
+        "signed|",
+        "void|",
+    ],
     singleline_comment_start: Some("//"),
     flags: HL::C_FLAGS,
 }];
