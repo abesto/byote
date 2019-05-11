@@ -318,7 +318,7 @@ fn editor_row_del_char(e: &mut EditorConfig, at_row: usize, at: usize) {
 
 fn editor_insert_char(e: &mut EditorConfig, c: char) {
     if e.cy == e.rows.len() {
-        editor_append_row(e, "");
+        editor_insert_row(e, e.rows.len(), "");
     }
     editor_row_insert_char(e, e.cx, c);
     e.cx += 1;
@@ -360,7 +360,8 @@ fn editor_open(e: &mut EditorConfig, filename: &str) {
     let file = unwrap_or_die("editor_open/open", std::fs::File::open(filename));
     let reader = std::io::BufReader::new(file);
     for line in reader.lines() {
-        line.map(|l| editor_append_row(e, &l)).unwrap();
+        line.map(|l| editor_insert_row(e, e.rows.len(), &l))
+            .unwrap();
     }
     e.dirty = false;
 }
