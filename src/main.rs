@@ -356,6 +356,7 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
         return;
     }
     let syntax = e.syntax.unwrap();
+    let keywords = syntax.keywords;
 
     let scs = syntax.singleline_comment_start.unwrap_or("");
     let scs_len = scs.len();
@@ -367,14 +368,11 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
     let mut prev_hl = Highlight::Normal;
 
     while let Some((i, c)) = iter.next() {
-        if scs_len > 0 && in_string == '\0' {
-            let candidate = &row.render[i..i + scs_len.min(row.render.len() - i)];
-            if candidate == scs {
-                let comment_len = row.hl.len() - i;
-                row.hl
-                    .splice(i..i + comment_len, vec![Highlight::Comment; comment_len]);
-                break;
-            }
+        if scs_len > 0 && in_string == '\0' && row.render[i..].starts_with(scs) {
+            let comment_len = row.hl.len() - i;
+            row.hl
+                .splice(i..i + comment_len, vec![Highlight::Comment; comment_len]);
+            break;
         }
 
         if syntax.flags.contains(HL::HIGHLIGHT_STRINGS) {
@@ -396,19 +394,49 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
             }
         }
 
-        if syntax.flags.contains(HL::HIGHLIGHT_NUMBERS) {
-            if (c.is_ascii_digit() && (prev_sep || prev_hl == Highlight::Number))
-                || (c == '.' && prev_hl == Highlight::Number)
-            {
-                row.hl[i] = Highlight::Number;
-                prev_hl = Highlight::Number;
+        if syntax.flags.contains(HL::HIGHLIGHT_NUMBERS)
+            && ((c.is_ascii_digit() && (prev_sep || prev_hl == Highlight::Number))
+                || (c == '.' && prev_hl == Highlight::Number))
+        {
+            row.hl[i] = Highlight::Number;
+            prev_hl = Highlight::Number;
+            prev_sep = false;
+            continue;
+        }
+
+        if prev_sep {
+            let mut keyword_found = false;
+            for spec in keywords.iter() {
+                let kw2 = spec.ends_with('|');
+                let klen = if kw2 { spec.len() - 1 } else { spec.len() };
+                let keyword = &spec[..klen];
+                if row.render[i..].starts_with(keyword)
+                    && is_separator(iter.clone().map(|t| t.1).nth(klen - 1).unwrap_or('\r'))
+                {
+                    row.hl.splice(
+                        i..i + klen,
+                        vec![
+                            if kw2 {
+                                Highlight::Keyword2
+                            } else {
+                                Highlight::Keyword1
+                            };
+                            klen
+                        ],
+                    );
+                    iter.nth(klen - 2);
+                    keyword_found = true;
+                    break;
+                }
+            }
+            if keyword_found {
                 prev_sep = false;
                 continue;
             }
-
-            prev_sep = is_separator(c);
-            prev_hl = row.hl[i].clone();
         }
+
+        prev_sep = is_separator(c);
+        prev_hl = row.hl[i].clone();
     }
 }
 
