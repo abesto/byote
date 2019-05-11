@@ -525,6 +525,28 @@ fn editor_draw_message_bar(e: &EditorConfig, buffer: &mut String) {
 
 /*** input ***/
 
+fn editor_prompt(e: &mut EditorConfig, prompt: &str) -> String {
+    let mut buf = String::with_capacity(128);
+    loop {
+        editor_set_status_message(e, &format!("{}{}", prompt, buf));
+        editor_refresh_screen(e);
+        match editor_read_key() {
+            EditorKey::Char(c) if c == b'\r' && !buf.is_empty() => {
+                editor_set_status_message(e, "");
+                return buf;
+            }
+            EditorKey::Char(c) if !c.is_ascii_control() && c < 128 => {
+                // Strictly speaking we don't need to do this, but it's fun!
+                if buf.len() == buf.capacity() - 1 {
+                    buf.reserve(buf.len());
+                }
+                buf.push(c as char);
+            }
+            _ => (),
+        }
+    }
+}
+
 fn editor_move_cursor(key: &EditorKey, e: &mut EditorConfig) {
     let row_old = e.rows.get(e.cy).map(|r| &r.chars);
     let rowlen_old = row_old.map(String::len).unwrap_or(0);
