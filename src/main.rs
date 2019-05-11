@@ -47,6 +47,7 @@ enum EditorKey {
     End,
     PageDown,
 
+    Return,
     Escape,
 
     Char(u8),
@@ -73,6 +74,11 @@ struct ERow {
     render: String,
 }
 
+struct FindState {
+    last_match: isize,
+    direction: i8,
+}
+
 struct EditorConfig {
     screenrows: usize,
     screencols: usize,
@@ -87,6 +93,7 @@ struct EditorConfig {
     filename: Option<String>,
     statusmsg: String,
     statusmsg_time: Instant,
+    find: FindState,
 }
 
 impl EditorConfig {
@@ -106,6 +113,10 @@ impl EditorConfig {
             filename: None,
             statusmsg: String::new(),
             statusmsg_time: Instant::now(),
+            find: FindState {
+                last_match: -1,
+                direction: 1,
+            },
         })
     }
 }
@@ -192,6 +203,8 @@ fn editor_read_key() -> EditorKey {
 
                         _ => EditorKey::Escape,
                     };
+                } else if c == b'\r' {
+                    return EditorKey::Return;
                 } else {
                     return EditorKey::Char(c);
                 }
@@ -437,20 +450,28 @@ fn editor_save(e: &mut EditorConfig) {
 
 fn editor_find_callback(e: &mut EditorConfig, query: &str, key: &EditorKey) {
     match key {
-        EditorKey::Escape => (),
-        EditorKey::Char(c) if *c == b'\r' => (),
+        EditorKey::Escape | EditorKey::Return => {
+            e.find.last_match = -1;
+            e.find.direction = 1;
+            return;
+        }
+        EditorKey::ArrowLeft | EditorKey::ArrowUp => e.find.direction = 1,
+        EditorKey::ArrowDown | EditorKey::ArrowRight => e.find.direction = 1,
         _ => {
-            for y in 0..e.rows.len() {
-                let row = &e.rows[y];
-                match row.render.find(&query) {
-                    None => (),
-                    Some(rx) => {
-                        e.cy = y;
-                        e.cx = editor_row_rx_to_cx(row, rx);
-                        e.rowoff = e.rows.len();
-                        break;
-                    }
-                }
+            e.find.last_match = -1;
+            e.find.direction = 1;
+        }
+    }
+
+    for y in 0..e.rows.len() {
+        let row = &e.rows[y];
+        match row.render.find(&query) {
+            None => (),
+            Some(rx) => {
+                e.cy = y;
+                e.cx = editor_row_rx_to_cx(row, rx);
+                e.rowoff = e.rows.len();
+                break;
             }
         }
     }
@@ -618,12 +639,14 @@ fn editor_prompt(
                 };
                 return None;
             }
-            EditorKey::Char(c) if c == b'\r' && !buf.is_empty() => {
-                editor_set_status_message(e, "");
-                if let Some(f) = callback {
-                    f(e, &buf, &k)
-                };
-                return Some(buf);
+            EditorKey::Return => {
+                if !buf.is_empty() {
+                    editor_set_status_message(e, "");
+                    if let Some(f) = callback {
+                        f(e, &buf, &k)
+                    };
+                    return Some(buf);
+                }
             }
             EditorKey::Char(c) if !c.is_ascii_control() && c < 128 => {
                 // Strictly speaking we don't need to do this, but it's fun!
@@ -669,7 +692,7 @@ fn editor_move_cursor(key: &EditorKey, e: &mut EditorConfig) {
 fn editor_process_keypress(e: &mut EditorConfig) {
     let key = editor_read_key();
     match key {
-        EditorKey::Char(b'\r') => editor_insert_new_line(e),
+        EditorKey::Return => editor_insert_new_line(e),
 
         EditorKey::Char(c) if c == ctrl_key(b'q') => {
             if e.dirty && e.quit_times > 0 {
