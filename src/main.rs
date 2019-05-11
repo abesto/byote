@@ -285,7 +285,9 @@ fn get_window_size() -> Result<(usize, usize)> {
 fn editor_update_syntax(row: &mut ERow) {
     row.hl = vec![Highlight::Normal; row.render.len()];
 
-    for (i, c) in row.render.char_indices() {
+    let mut iter = row.render.char_indices();
+
+    while let Some((i, c)) = iter.next() {
         if c.is_ascii_digit() {
             row.hl[i] = Highlight::Number;
         }
