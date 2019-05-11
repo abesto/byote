@@ -80,7 +80,7 @@ bitflags! {
 
 struct EditorSyntax {
     filetype: &'static str,
-    filematch: Vec<&'static str>,
+    filematch: &'static [&'static str],
     flags: HL,
 }
 
@@ -161,9 +161,9 @@ lazy_static! {
 
 /*** filetypes ***/
 
-static HLDB: Vec<EditorSyntax> = vec![EditorSyntax {
+static HLDB: [EditorSyntax; 1] = [EditorSyntax {
     filetype: "c",
-    filematch: vec![".c", ".h", ".cpp"],
+    filematch: &[".c", ".h", ".cpp"],
     flags: HL::HIGHLIGHT_NUMBERS,
 }];
 
@@ -724,7 +724,12 @@ fn editor_draw_status_bar(e: &EditorConfig, buffer: &mut String) {
         e.rows.len(),
         if e.dirty { "(modified)" } else { "" }
     );
-    let rstatus = format!("{}/{}", e.cy + 1, e.rows.len());
+    let rstatus = format!(
+        "{} | {}/{}",
+        e.syntax.map(|s| s.filetype).unwrap_or("no ft"),
+        e.cy + 1,
+        e.rows.len()
+    );
 
     *buffer += &status[..=e.screencols.min(status.len() - 1)];
     *buffer += &" ".repeat(e.screencols - status.len() - rstatus.len());
