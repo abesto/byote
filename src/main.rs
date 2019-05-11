@@ -671,6 +671,8 @@ fn editor_process_keypress(e: &mut EditorConfig) {
             }
         }
 
+        EditorKey::Char(c) if c == ctrl_key(b'f') => editor_find(e),
+
         ref k if is_backspace_or_delete(k) => {
             if *k == EditorKey::Delete {
                 editor_move_cursor(&EditorKey::ArrowRight, e);
@@ -710,7 +712,10 @@ fn main() {
     enable_raw_mode();
     let mut e = init_editor();
 
-    editor_set_status_message(&mut e, "HELP: Ctrl-S = save | Ctrl-Q = quit");
+    editor_set_status_message(
+        &mut e,
+        "HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find",
+    );
 
     if let Some(filename) = std::env::args().nth(1) {
         editor_open(&mut e, &filename)
