@@ -580,21 +580,27 @@ fn editor_draw_message_bar(e: &EditorConfig, buffer: &mut String) {
 
 /*** input ***/
 
-fn editor_prompt(e: &mut EditorConfig, prompt: &str) -> Option<String> {
+fn editor_prompt<F>(e: &mut EditorConfig, prompt: &str, callback: Option<F>) -> Option<String>
+where
+    F: Fn(String, EditorKey),
+{
     let mut buf = String::with_capacity(128);
     loop {
         editor_set_status_message(e, &format!("{}{}", prompt, buf));
         editor_refresh_screen(e);
-        match editor_read_key() {
+        let k = editor_read_key();
+        match k {
             ref k if is_backspace_or_delete(k) => {
                 buf.remove(buf.len() - 1);
             }
             EditorKey::Escape => {
                 editor_set_status_message(e, "");
+                callback.map(|f| f(buf, k));
                 return None;
             }
             EditorKey::Char(c) if c == b'\r' && !buf.is_empty() => {
                 editor_set_status_message(e, "");
+                callback.map(|f| f(buf, k));
                 return Some(buf);
             }
             EditorKey::Char(c) if !c.is_ascii_control() && c < 128 => {
@@ -606,6 +612,7 @@ fn editor_prompt(e: &mut EditorConfig, prompt: &str) -> Option<String> {
             }
             _ => (),
         }
+        callback.map(|f| f(buf, k));
     }
 }
 
