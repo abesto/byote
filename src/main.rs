@@ -554,9 +554,7 @@ fn editor_move_cursor(key: &EditorKey, e: &mut EditorConfig) {
 fn editor_process_keypress(e: &mut EditorConfig) {
     let key = editor_read_key();
     match key {
-        EditorKey::Char(b'\r') => (
-            // TODO 
-        ),
+        EditorKey::Char(b'\r') => editor_insert_new_line(e),
 
         EditorKey::Char(c) if c == ctrl_key(b'q') => {
             if e.dirty && e.quit_times > 0 {
