@@ -360,6 +360,11 @@ fn editor_select_syntax_highlight(e: &mut EditorConfig) {
                         || (!is_ext && filename.contains(filematch))
                     {
                         e.syntax = Some(&syntax);
+
+                        for i in 0..e.rows.len() {
+                            editor_update_syntax(e, i);
+                        }
+
                         return;
                     }
                 }
