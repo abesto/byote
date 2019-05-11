@@ -269,13 +269,18 @@ fn editor_update_row(r: &mut ERow) {
         .collect();
 }
 
-fn editor_append_row(e: &mut EditorConfig, s: &str) {
+fn editor_insert_row(e: &mut EditorConfig, at: usize, s: &str) {
+    if at > e.rows.len() {
+        return;
+    }
+
     let mut row = ERow {
         chars: String::from(s),
         render: String::new(),
     };
     editor_update_row(&mut row);
-    e.rows.push(row);
+
+    e.rows.insert(at, row);
     e.dirty = true;
 }
 
