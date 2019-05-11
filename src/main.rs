@@ -32,6 +32,8 @@ fn ctrl_key(k: u8) -> u8 {
     k & 0x1f
 }
 
+type PromptCallback = fn(&mut EditorConfig, &str, &EditorKey);
+
 #[derive(Ord, PartialOrd, Eq, PartialEq)]
 enum EditorKey {
     ArrowLeft,
@@ -433,10 +435,11 @@ fn editor_save(e: &mut EditorConfig) {
 
 /*** find ***/
 
-fn editor_find(e: &mut EditorConfig) {
-    match editor_prompt(e, "Search (ESC to cancel): ", None) {
-        None => (),
-        Some(query) => {
+fn editor_find_callback(e: &mut EditorConfig, query: &str, key: &EditorKey) {
+    match key {
+        EditorKey::Escape => (),
+        EditorKey::Char(c) if *c == b'\r' => (),
+        _ => {
             for y in 0..e.rows.len() {
                 let row = &e.rows[y];
                 match row.render.find(&query) {
@@ -451,6 +454,10 @@ fn editor_find(e: &mut EditorConfig) {
             }
         }
     }
+}
+
+fn editor_find(e: &mut EditorConfig) {
+    editor_prompt(e, "Search (ESC to cancel): ", Some(editor_find_callback));
 }
 
 /*** output ***/
@@ -583,7 +590,7 @@ fn editor_draw_message_bar(e: &EditorConfig, buffer: &mut String) {
 fn editor_prompt(
     e: &mut EditorConfig,
     prompt: &str,
-    callback: Option<fn(&str, &EditorKey)>,
+    callback: Option<PromptCallback>,
 ) -> Option<String> {
     let mut buf = String::with_capacity(128);
     loop {
@@ -597,14 +604,14 @@ fn editor_prompt(
             EditorKey::Escape => {
                 editor_set_status_message(e, "");
                 if let Some(f) = callback {
-                    f(&buf, &k)
+                    f(e, &buf, &k)
                 };
                 return None;
             }
             EditorKey::Char(c) if c == b'\r' && !buf.is_empty() => {
                 editor_set_status_message(e, "");
                 if let Some(f) = callback {
-                    f(&buf, &k)
+                    f(e, &buf, &k)
                 };
                 return Some(buf);
             }
@@ -618,7 +625,7 @@ fn editor_prompt(
             _ => (),
         }
         if let Some(f) = callback {
-            f(&buf, &k)
+            f(e, &buf, &k)
         };
     }
 }
