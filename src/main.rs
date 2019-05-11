@@ -325,10 +325,27 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
     let syntax = e.syntax.unwrap();
 
     let mut prev_sep: bool = true;
+    let mut in_string: char = '\0';
+
     let mut iter = row.render.char_indices();
     let mut prev_hl = Highlight::Normal;
 
     while let Some((i, c)) = iter.next() {
+        if syntax.flags.contains(HL::HIGHLIGHT_STRINGS) {
+            if in_string != '\0' {
+                row.hl[i] = Highlight::String;
+                if c == in_string as char {
+                    in_string = '\0';
+                };
+                prev_sep = true;
+                continue;
+            } else if c == '"' || c == '\'' {
+                in_string = c;
+                row.hl[i] = Highlight::String;
+                continue;
+            }
+        }
+
         if syntax.flags.contains(HL::HIGHLIGHT_NUMBERS) {
             if (c.is_ascii_digit() && (prev_sep || prev_hl == Highlight::Number))
                 || (c == '.' && prev_hl == Highlight::Number)
