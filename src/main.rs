@@ -289,12 +289,20 @@ fn is_separator(c: char) -> bool {
 fn editor_update_syntax(row: &mut ERow) {
     row.hl = vec![Highlight::Normal; row.render.len()];
 
+    let mut prev_sep: bool = true;
     let mut iter = row.render.char_indices();
+    let mut prev_hl = Highlight::Normal;
 
     while let Some((i, c)) = iter.next() {
-        if c.is_ascii_digit() {
+        if c.is_ascii_digit() && (prev_sep || prev_hl == Highlight::Number) {
             row.hl[i] = Highlight::Number;
+            prev_hl = Highlight::Number;
+            prev_sep = false;
+            continue;
         }
+
+        prev_sep = is_separator(c);
+        prev_hl = row.hl[i].clone();
     }
 }
 
