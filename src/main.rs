@@ -407,7 +407,7 @@ fn editor_open(e: &mut EditorConfig, filename: &str) {
 
 fn editor_save(e: &mut EditorConfig) {
     if e.filename.is_none() {
-        e.filename = editor_prompt(e, "Save as (ESC to cancel): ");
+        e.filename = editor_prompt(e, "Save as (ESC to cancel): ", None);
         if e.filename.is_none() {
             editor_set_status_message(e, "Save aborted!");
             return;
@@ -434,7 +434,7 @@ fn editor_save(e: &mut EditorConfig) {
 /*** find ***/
 
 fn editor_find(e: &mut EditorConfig) {
-    match editor_prompt(e, "Search (ESC to cancel): ") {
+    match editor_prompt(e, "Search (ESC to cancel): ", None) {
         None => (),
         Some(query) => {
             for y in 0..e.rows.len() {
@@ -580,13 +580,14 @@ fn editor_draw_message_bar(e: &EditorConfig, buffer: &mut String) {
 
 /*** input ***/
 
-fn editor_prompt<F>(e: &mut EditorConfig, prompt: &str, callback: Option<F>) -> Option<String>
-where
-    F: Fn(String, EditorKey),
-{
+fn editor_prompt(
+    e: &mut EditorConfig,
+    prompt: &str,
+    callback: Option<fn(&str, &EditorKey)>,
+) -> Option<String> {
     let mut buf = String::with_capacity(128);
     loop {
-        editor_set_status_message(e, &format!("{}{}", prompt, buf));
+        editor_set_status_message(e, &format!("{}{}", prompt, &buf));
         editor_refresh_screen(e);
         let k = editor_read_key();
         match k {
@@ -595,12 +596,16 @@ where
             }
             EditorKey::Escape => {
                 editor_set_status_message(e, "");
-                callback.map(|f| f(buf, k));
+                if let Some(f) = callback {
+                    f(&buf, &k)
+                };
                 return None;
             }
             EditorKey::Char(c) if c == b'\r' && !buf.is_empty() => {
                 editor_set_status_message(e, "");
-                callback.map(|f| f(buf, k));
+                if let Some(f) = callback {
+                    f(&buf, &k)
+                };
                 return Some(buf);
             }
             EditorKey::Char(c) if !c.is_ascii_control() && c < 128 => {
@@ -612,7 +617,9 @@ where
             }
             _ => (),
         }
-        callback.map(|f| f(buf, k));
+        if let Some(f) = callback {
+            f(&buf, &k)
+        };
     }
 }
 
