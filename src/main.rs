@@ -87,6 +87,7 @@ struct EditorSyntax {
 #[derive(Ord, PartialOrd, Eq, PartialEq, Clone)]
 enum Highlight {
     Normal,
+    String,
     Number,
     Match,
 }
@@ -345,6 +346,7 @@ fn editor_syntax_to_color(hl: &Highlight) -> u8 {
     match hl {
         Highlight::Number => 31,
         Highlight::Match => 34,
+        Highlight::String => 35,
         _ => 37,
     }
 }
