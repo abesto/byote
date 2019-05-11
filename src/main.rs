@@ -825,7 +825,16 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
                 let hls = &row.hl[e.coloff..len];
                 let mut current_color: i8 = -1;
                 for (c, hl) in s.chars().zip(hls) {
-                    if *hl == Highlight::Normal {
+                    if c.is_ascii_control() {
+                        let sym = if (c as u8) < 26 {
+                            (b'@' + (c as u8)) as char
+                        } else {
+                            '?'
+                        };
+                        *buffer += "\x1b[7m";
+                        buffer.push(sym);
+                        *buffer += "\x1b[m";
+                    } else if *hl == Highlight::Normal {
                         if current_color != -1 {
                             *buffer += "\x1b[39m";
                             current_color = -1;
