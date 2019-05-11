@@ -85,6 +85,8 @@ struct ERow {
 struct FindState {
     last_match: isize,
     direction: i8,
+    saved_hl_line: usize,
+    saved_hl: Option<Vec<Highlight>>,
 }
 
 struct EditorConfig {
@@ -124,6 +126,8 @@ impl EditorConfig {
             find: FindState {
                 last_match: -1,
                 direction: 1,
+                saved_hl_line: 0,
+                saved_hl: None,
             },
         })
     }
@@ -480,6 +484,11 @@ fn editor_save(e: &mut EditorConfig) {
 /*** find ***/
 
 fn editor_find_callback(e: &mut EditorConfig, query: &str, key: &EditorKey) {
+    if let Some(saved_hl) = &e.find.saved_hl {
+        e.rows[e.find.saved_hl_line].hl = saved_hl.clone();
+        e.find.saved_hl = None;
+    }
+
     match key {
         EditorKey::Escape | EditorKey::Return => {
             e.find.last_match = -1;
@@ -515,6 +524,8 @@ fn editor_find_callback(e: &mut EditorConfig, query: &str, key: &EditorKey) {
                 e.cx = editor_row_rx_to_cx(row, rx);
                 e.rowoff = e.rows.len();
 
+                e.find.saved_hl_line = current as usize;
+                e.find.saved_hl = Some(e.rows[e.cy].hl.clone());
                 e.rows[e.cy]
                     .hl
                     .splice(rx..rx + query.len(), vec![Highlight::Match; query.len()]);
