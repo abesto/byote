@@ -311,25 +311,33 @@ fn is_separator(c: char) -> bool {
     c.is_whitespace() || c == '\0' || ",.()+-/*=~%<>[];".contains(c)
 }
 
-fn editor_update_syntax(row: &mut ERow) {
+fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
+    let row = &mut e.rows[at_row];
     row.hl = vec![Highlight::Normal; row.render.len()];
+
+    if e.syntax.is_none() {
+        return;
+    }
+    let syntax = e.syntax.unwrap();
 
     let mut prev_sep: bool = true;
     let mut iter = row.render.char_indices();
     let mut prev_hl = Highlight::Normal;
 
     while let Some((i, c)) = iter.next() {
-        if (c.is_ascii_digit() && (prev_sep || prev_hl == Highlight::Number))
-            || (c == '.' && prev_hl == Highlight::Number)
-        {
-            row.hl[i] = Highlight::Number;
-            prev_hl = Highlight::Number;
-            prev_sep = false;
-            continue;
-        }
+        if syntax.flags.contains(HL::HIGHLIGHT_NUMBERS) {
+            if (c.is_ascii_digit() && (prev_sep || prev_hl == Highlight::Number))
+                || (c == '.' && prev_hl == Highlight::Number)
+            {
+                row.hl[i] = Highlight::Number;
+                prev_hl = Highlight::Number;
+                prev_sep = false;
+                continue;
+            }
 
-        prev_sep = is_separator(c);
-        prev_hl = row.hl[i].clone();
+            prev_sep = is_separator(c);
+            prev_hl = row.hl[i].clone();
+        }
     }
 }
 
@@ -368,7 +376,8 @@ fn editor_row_rx_to_cx(r: &ERow, rx: usize) -> usize {
     rx
 }
 
-fn editor_update_row(r: &mut ERow) {
+fn editor_update_row(e: &mut EditorConfig, at_row: usize) {
+    let r = &mut e.rows[at_row];
     r.render = r
         .chars
         .char_indices()
@@ -378,7 +387,7 @@ fn editor_update_row(r: &mut ERow) {
         })
         .collect();
 
-    editor_update_syntax(r);
+    editor_update_syntax(e, at_row);
 }
 
 fn editor_insert_row(e: &mut EditorConfig, at: usize, s: &str) {
@@ -386,14 +395,14 @@ fn editor_insert_row(e: &mut EditorConfig, at: usize, s: &str) {
         return;
     }
 
-    let mut row = ERow {
+    let row = ERow {
         chars: String::from(s),
         render: String::new(),
         hl: Vec::new(),
     };
-    editor_update_row(&mut row);
-
     e.rows.insert(at, row);
+    editor_update_row(e, at);
+
     e.dirty = true;
 }
 
@@ -409,21 +418,21 @@ fn editor_del_row(e: &mut EditorConfig, at: usize) {
 fn editor_row_insert_char(e: &mut EditorConfig, at: usize, c: char) {
     let row = &mut e.rows[e.cy];
     row.chars.insert(at.max(0).min(row.chars.len()), c);
-    editor_update_row(row);
+    editor_update_row(e, e.cy);
     e.dirty = true;
 }
 
 fn editor_row_append_string(e: &mut EditorConfig, at_row: usize, s: &str) {
     let row = &mut e.rows[at_row];
     row.chars += s;
-    editor_update_row(row);
+    editor_update_row(e, at_row);
     e.dirty = true;
 }
 
 fn editor_row_del_char(e: &mut EditorConfig, at_row: usize, at: usize) {
     let row = &mut e.rows[at_row];
     row.chars.remove(at.max(0).min(row.chars.len()));
-    editor_update_row(row);
+    editor_update_row(e, at_row);
     e.dirty = true;
 }
 
@@ -445,7 +454,7 @@ fn editor_insert_new_line(e: &mut EditorConfig) {
         editor_insert_row(e, e.cy + 1, &right);
         let row = &mut e.rows[e.cy];
         row.chars = row.chars[..e.cx].into();
-        editor_update_row(row);
+        editor_update_row(e, e.cy);
     }
     e.cy += 1;
     e.cx = 0;
