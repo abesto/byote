@@ -56,6 +56,14 @@ const BYOTE_QUIT_TIMES: u8 = 3;
 
 const BACKSPACE: u8 = 127;
 
+fn is_backspace_or_delete(k: &EditorKey) -> bool {
+    match *k {
+        EditorKey::Delete => true,
+        EditorKey::Char(c) if c == BACKSPACE || c == ctrl_key(b'h') => true,
+        _ => false,
+    }
+}
+
 /*** data ***/
 
 struct ERow {
@@ -362,6 +370,9 @@ fn editor_del_char(e: &mut EditorConfig) {
 /*** file i/o ***/
 
 fn editor_rows_to_string(e: &EditorConfig) -> String {
+    if e.rows.is_empty() {
+        return String::new();
+    }
     e.rows
         .iter()
         .skip(1)
@@ -539,6 +550,9 @@ fn editor_prompt(e: &mut EditorConfig, prompt: &str) -> Option<String> {
         editor_set_status_message(e, &format!("{}{}", prompt, buf));
         editor_refresh_screen(e);
         match editor_read_key() {
+            ref k if is_backspace_or_delete(k) => {
+                buf.remove(buf.len() - 1);
+            }
             EditorKey::Escape => {
                 editor_set_status_message(e, "");
                 return None;
@@ -621,11 +635,12 @@ fn editor_process_keypress(e: &mut EditorConfig) {
             }
         }
 
-        EditorKey::Delete => {
-            editor_move_cursor(&EditorKey::ArrowRight, e);
+        ref k if is_backspace_or_delete(k) => {
+            if *k == EditorKey::Delete {
+                editor_move_cursor(&EditorKey::ArrowRight, e);
+            }
             editor_del_char(e);
         }
-        EditorKey::Char(c) if c == BACKSPACE || c == ctrl_key(b'h') => editor_del_char(e),
 
         EditorKey::PageDown | EditorKey::PageUp => {
             let arrow = if key == EditorKey::PageUp {
