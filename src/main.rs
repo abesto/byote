@@ -294,7 +294,9 @@ fn editor_update_syntax(row: &mut ERow) {
     let mut prev_hl = Highlight::Normal;
 
     while let Some((i, c)) = iter.next() {
-        if c.is_ascii_digit() && (prev_sep || prev_hl == Highlight::Number) {
+        if (c.is_ascii_digit() && (prev_sep || prev_hl == Highlight::Number))
+            || (c == '.' && prev_hl == Highlight::Number)
+        {
             row.hl[i] = Highlight::Number;
             prev_hl = Highlight::Number;
             prev_sep = false;
