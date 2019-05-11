@@ -349,6 +349,25 @@ fn editor_syntax_to_color(hl: &Highlight) -> u8 {
     }
 }
 
+fn editor_select_syntax_highlight(e: &mut EditorConfig) {
+    match &e.filename {
+        None => e.syntax = None,
+        Some(filename) => {
+            for syntax in HLDB.iter() {
+                for filematch in syntax.filematch.iter() {
+                    let is_ext = filematch.starts_with('.');
+                    if (is_ext && filename.ends_with(filematch))
+                        || (!is_ext && filename.contains(filematch))
+                    {
+                        e.syntax = Some(&syntax);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
 /*** row operations ***/
 
 fn editor_row_cx_to_rx(r: &ERow, cx: usize) -> usize {
