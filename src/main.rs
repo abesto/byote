@@ -79,8 +79,8 @@ bitflags! {
 /*** data ***/
 
 struct EditorSyntax {
-    filetype: String,
-    filematch: Vec<String>,
+    filetype: &'static str,
+    filematch: Vec<&'static str>,
     flags: HL,
 }
 
@@ -156,6 +156,14 @@ lazy_static! {
         Termios::from_fd(*STDIN_RAWFD)
     );
 }
+
+/*** filetypes ***/
+
+static HLDB: Vec<EditorSyntax> = vec![EditorSyntax {
+    filetype: "c",
+    filematch: vec![".c", ".h", ".cpp"],
+    flags: HL::HIGHLIGHT_NUMBERS,
+}];
 
 /*** terminal ***/
 
