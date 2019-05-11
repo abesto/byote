@@ -381,6 +381,10 @@ fn editor_open(e: &mut EditorConfig, filename: &str) {
 }
 
 fn editor_save(e: &mut EditorConfig) {
+    if e.filename.is_none() {
+        e.filename = Some(editor_prompt(e, "Save as: "));
+    }
+
     match &e.filename {
         Some(filename) => {
             let buf = editor_rows_to_string(e);
