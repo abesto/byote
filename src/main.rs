@@ -324,6 +324,20 @@ fn editor_insert_char(e: &mut EditorConfig, c: char) {
     e.cx += 1;
 }
 
+fn editor_insert_new_line(e: &mut EditorConfig) {
+    if e.cx == 0 {
+        editor_insert_row(e, e.cy, "");
+    } else {
+        let right: String = e.rows[e.cy].chars[e.cx..].into();
+        editor_insert_row(e, e.cy + 1, &right);
+        let row = &mut e.rows[e.cy];
+        row.chars = row.chars[..e.cx].into();
+        editor_update_row(row);
+    }
+    e.cy += 1;
+    e.cx = 0;
+}
+
 fn editor_del_char(e: &mut EditorConfig) {
     if e.cy == e.rows.len() {
         return;
