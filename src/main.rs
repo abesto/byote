@@ -382,7 +382,7 @@ fn editor_open(e: &mut EditorConfig, filename: &str) {
 
 fn editor_save(e: &mut EditorConfig) {
     if e.filename.is_none() {
-        e.filename = Some(editor_prompt(e, "Save as: "));
+        e.filename = editor_prompt(e, "Save as: ");
     }
 
     match &e.filename {
@@ -529,15 +529,19 @@ fn editor_draw_message_bar(e: &EditorConfig, buffer: &mut String) {
 
 /*** input ***/
 
-fn editor_prompt(e: &mut EditorConfig, prompt: &str) -> String {
+fn editor_prompt(e: &mut EditorConfig, prompt: &str) -> Option<String> {
     let mut buf = String::with_capacity(128);
     loop {
         editor_set_status_message(e, &format!("{}{}", prompt, buf));
         editor_refresh_screen(e);
         match editor_read_key() {
+            EditorKey::Escape => {
+                editor_set_status_message(e, "");
+                return None;
+            }
             EditorKey::Char(c) if c == b'\r' && !buf.is_empty() => {
                 editor_set_status_message(e, "");
-                return buf;
+                return Some(buf);
             }
             EditorKey::Char(c) if !c.is_ascii_control() && c < 128 => {
                 // Strictly speaking we don't need to do this, but it's fun!
