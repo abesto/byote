@@ -455,7 +455,7 @@ fn editor_find_callback(e: &mut EditorConfig, query: &str, key: &EditorKey) {
             e.find.direction = 1;
             return;
         }
-        EditorKey::ArrowLeft | EditorKey::ArrowUp => e.find.direction = 1,
+        EditorKey::ArrowLeft | EditorKey::ArrowUp => e.find.direction = -1,
         EditorKey::ArrowDown | EditorKey::ArrowRight => e.find.direction = 1,
         _ => {
             e.find.last_match = -1;
@@ -463,12 +463,24 @@ fn editor_find_callback(e: &mut EditorConfig, query: &str, key: &EditorKey) {
         }
     }
 
-    for y in 0..e.rows.len() {
-        let row = &e.rows[y];
+    if e.find.last_match == -1 {
+        e.find.direction = 1;
+    }
+
+    let mut current = e.find.last_match;
+    for _y in 0..e.rows.len() {
+        current += e.find.direction as isize;
+        if current == -1 {
+            current = (e.rows.len() - 1) as isize;
+        } else if current == e.rows.len() as isize {
+            current = 0;
+        }
+        let row = &e.rows[current as usize];
         match row.render.find(&query) {
             None => (),
             Some(rx) => {
-                e.cy = y;
+                e.find.last_match = current;
+                e.cy = current as usize;
                 e.cx = editor_row_rx_to_cx(row, rx);
                 e.rowoff = e.rows.len();
                 break;
