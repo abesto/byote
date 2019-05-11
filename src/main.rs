@@ -119,6 +119,7 @@ struct EditorConfig {
     statusmsg: String,
     statusmsg_time: Instant,
     find: FindState,
+    syntax: Option<&'static EditorSyntax>,
 }
 
 impl EditorConfig {
@@ -144,6 +145,7 @@ impl EditorConfig {
                 saved_hl_line: 0,
                 saved_hl: None,
             },
+            syntax: None,
         })
     }
 }
