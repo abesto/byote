@@ -626,13 +626,20 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
             if len > 0 {
                 let s = &row.render[e.coloff..];
                 let hls = &row.hl[e.coloff..];
+                let mut current_color: i8 = -1;
                 for (c, hl) in s.chars().zip(hls) {
                     if *hl == Highlight::Normal {
-                        *buffer += "\x1b[39m";
+                        if current_color != -1 {
+                            *buffer += "\x1b[39m";
+                            current_color = -1;
+                        }
                         buffer.push(c);
                     } else {
                         let color = editor_syntax_to_color(hl);
-                        *buffer += &format!("\x1b[{}m", color);
+                        if current_color as u8 != color {
+                            current_color = color as i8;
+                            *buffer += &format!("\x1b[{}m", color);
+                        }
                         buffer.push(c);
                     }
                 }
