@@ -323,6 +323,8 @@ fn editor_update_row(r: &mut ERow) {
             _ => c.to_string(),
         })
         .collect();
+
+    editor_update_syntax(r);
 }
 
 fn editor_insert_row(e: &mut EditorConfig, at: usize, s: &str) {
