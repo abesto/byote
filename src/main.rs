@@ -287,6 +287,13 @@ fn editor_update_syntax(row: &mut ERow) {
     }
 }
 
+fn editor_syntax_to_color(hl: Highlight) -> u8 {
+    match hl {
+        Highlight::Normal => 31,
+        _ => 37,
+    }
+}
+
 /*** row operations ***/
 
 fn editor_row_cx_to_rx(r: &ERow, cx: usize) -> usize {
