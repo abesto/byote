@@ -595,7 +595,16 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
                 .unwrap_or(0)
                 .min(e.screencols);
             if len > 0 {
-                *buffer += &row.render[e.coloff..e.coloff + len];
+                let s = &e.rows[filerow].render[e.coloff..];
+                for c in s.chars() {
+                    if c.is_ascii_digit() {
+                        *buffer += "\x1b[31m";
+                        buffer.push(c);
+                        *buffer += "\x1b[39m";
+                    } else {
+                        buffer.push(c);
+                    }
+                }
             }
         }
         *buffer += "\x1b[K";
