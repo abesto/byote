@@ -514,6 +514,10 @@ fn editor_find_callback(e: &mut EditorConfig, query: &str, key: &EditorKey) {
                 e.cy = current as usize;
                 e.cx = editor_row_rx_to_cx(row, rx);
                 e.rowoff = e.rows.len();
+
+                e.rows[e.cy]
+                    .hl
+                    .splice(rx..rx + query.len(), vec![Highlight::Match; query.len()]);
                 break;
             }
         }
