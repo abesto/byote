@@ -73,6 +73,9 @@ fn is_backspace_or_delete(k: &EditorKey) -> bool {
 bitflags! {
     struct HL: u32 {
         const HIGHLIGHT_NUMBERS = 1;
+        const HIGHLIGHT_STRINGS = 1<<1;
+
+        const C_FLAGS = Self::HIGHLIGHT_NUMBERS.bits | Self::HIGHLIGHT_STRINGS.bits;
     }
 }
 
@@ -165,7 +168,7 @@ lazy_static! {
 static HLDB: [EditorSyntax; 1] = [EditorSyntax {
     filetype: "c",
     filematch: &[".c", ".h", ".cpp"],
-    flags: HL::HIGHLIGHT_NUMBERS,
+    flags: HL::C_FLAGS,
 }];
 
 /*** terminal ***/
