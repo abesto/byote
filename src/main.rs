@@ -565,6 +565,7 @@ fn editor_scroll(e: &mut EditorConfig) {
     if e.rx >= e.coloff + e.screencols {
         e.coloff = e.rx - e.screencols + 1;
     }
+    editor_set_status_message(e, &format!("{} {}", e.cy, e.rowoff));
 }
 
 fn flush_stdout() {
@@ -630,8 +631,8 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
                 .unwrap_or(0)
                 .min(e.screencols);
             if len > 0 {
-                let s = &row.render[e.coloff..];
-                let hls = &row.hl[e.coloff..];
+                let s = &row.render[e.coloff..len];
+                let hls = &row.hl[e.coloff..len];
                 let mut current_color: i8 = -1;
                 for (c, hl) in s.chars().zip(hls) {
                     if *hl == Highlight::Normal {
