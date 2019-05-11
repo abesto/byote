@@ -282,6 +282,10 @@ fn get_window_size() -> Result<(usize, usize)> {
 
 /*** syntax highlighting ***/
 
+fn is_separator(c: char) -> bool {
+    c.is_whitespace() || c == '\0' || ",.()+-/*=~%<>[];".contains(c)
+}
+
 fn editor_update_syntax(row: &mut ERow) {
     row.hl = vec![Highlight::Normal; row.render.len()];
 
