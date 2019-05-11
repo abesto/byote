@@ -834,6 +834,9 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
                         *buffer += "\x1b[7m";
                         buffer.push(sym);
                         *buffer += "\x1b[m";
+                        if current_color != -1 {
+                            *buffer += &format!("\x1b[{}m", current_color);
+                        }
                     } else if *hl == Highlight::Normal {
                         if current_color != -1 {
                             *buffer += "\x1b[39m";
