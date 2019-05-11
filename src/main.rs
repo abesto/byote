@@ -417,6 +417,28 @@ fn editor_save(e: &mut EditorConfig) {
     }
 }
 
+/*** find ***/
+
+fn editor_find(e: &mut EditorConfig) {
+    match editor_prompt(e, "Search (ESC to cancel): ") {
+        None => (),
+        Some(query) => {
+            for y in 0..e.rows.len() {
+                let row = &e.rows[y];
+                match row.render.find(&query) {
+                    None => (),
+                    Some(x) => {
+                        e.cy = y;
+                        e.cx = x;
+                        e.rowoff = e.rows.len();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
 /*** output ***/
 
 fn editor_scroll(e: &mut EditorConfig) {
