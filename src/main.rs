@@ -84,7 +84,7 @@ bitflags! {
 struct EditorSyntax {
     filetype: &'static str,
     filematch: &'static [&'static str],
-    singleline_comment_start: &'static str,
+    singleline_comment_start: Option<&'static str>,
     flags: HL,
 }
 
@@ -170,7 +170,7 @@ lazy_static! {
 static HLDB: [EditorSyntax; 1] = [EditorSyntax {
     filetype: "c",
     filematch: &[".c", ".h", ".cpp"],
-    singleline_comment_start: "//",
+    singleline_comment_start: Some("//"),
     flags: HL::C_FLAGS,
 }];
 
@@ -327,6 +327,9 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
     }
     let syntax = e.syntax.unwrap();
 
+    let scs = syntax.singleline_comment_start.unwrap_or("");
+    let scs_len = scs.len();
+
     let mut prev_sep: bool = true;
     let mut in_string: char = '\0';
 
@@ -334,6 +337,16 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
     let mut prev_hl = Highlight::Normal;
 
     while let Some((i, c)) = iter.next() {
+        if scs_len > 0 && in_string == '\0' {
+            let candidate = &row.render[i..i + scs_len.min(row.render.len() - i)];
+            if candidate == scs {
+                let comment_len = row.hl.len() - i;
+                row.hl
+                    .splice(i..i + comment_len, vec![Highlight::Comment; comment_len]);
+                break;
+            }
+        }
+
         if syntax.flags.contains(HL::HIGHLIGHT_STRINGS) {
             if in_string != '\0' {
                 row.hl[i] = Highlight::String;
