@@ -6,6 +6,9 @@ extern crate lazy_static;
 #[macro_use]
 extern crate simple_error;
 
+#[macro_use]
+extern crate bitflags;
+
 use libc::{atexit, ioctl, winsize, TIOCGWINSZ};
 use nix::Error;
 use std::io::{BufRead, ErrorKind, Read, Write};
@@ -67,7 +70,19 @@ fn is_backspace_or_delete(k: &EditorKey) -> bool {
     }
 }
 
+bitflags! {
+    struct HL: u32 {
+        const HIGHLIGHT_NUMBERS = 1;
+    }
+}
+
 /*** data ***/
+
+struct EditorSyntax {
+    filetype: String,
+    filematch: Vec<String>,
+    flags: HL,
+}
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Clone)]
 enum Highlight {
