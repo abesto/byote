@@ -84,6 +84,7 @@ bitflags! {
 struct EditorSyntax {
     filetype: &'static str,
     filematch: &'static [&'static str],
+    singleline_comment_start: &'static str,
     flags: HL,
 }
 
@@ -169,6 +170,7 @@ lazy_static! {
 static HLDB: [EditorSyntax; 1] = [EditorSyntax {
     filetype: "c",
     filematch: &[".c", ".h", ".cpp"],
+    singleline_comment_start: "//",
     flags: HL::C_FLAGS,
 }];
 
