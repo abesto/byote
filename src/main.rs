@@ -441,9 +441,9 @@ fn editor_find(e: &mut EditorConfig) {
                 let row = &e.rows[y];
                 match row.render.find(&query) {
                     None => (),
-                    Some(x) => {
+                    Some(rx) => {
                         e.cy = y;
-                        e.cx = x;
+                        e.cx = editor_row_rx_to_cx(row, rx);
                         e.rowoff = e.rows.len();
                         break;
                     }
