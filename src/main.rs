@@ -457,7 +457,17 @@ fn editor_find_callback(e: &mut EditorConfig, query: &str, key: &EditorKey) {
 }
 
 fn editor_find(e: &mut EditorConfig) {
-    editor_prompt(e, "Search (ESC to cancel): ", Some(editor_find_callback));
+    let saved_cx = e.cx;
+    let saved_cy = e.cy;
+    let saved_rowoff = e.rowoff;
+    let saved_coloff = e.coloff;
+
+    if editor_prompt(e, "Search (ESC to cancel): ", Some(editor_find_callback)).is_none() {
+        e.cx = saved_cx;
+        e.cy = saved_cy;
+        e.rowoff = saved_rowoff;
+        e.coloff = saved_coloff;
+    }
 }
 
 /*** output ***/
