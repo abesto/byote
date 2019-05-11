@@ -495,7 +495,13 @@ fn editor_find(e: &mut EditorConfig) {
     let saved_rowoff = e.rowoff;
     let saved_coloff = e.coloff;
 
-    if editor_prompt(e, "Search (ESC to cancel): ", Some(editor_find_callback)).is_none() {
+    if editor_prompt(
+        e,
+        "Search (Use ESC/Arrows/Enter): ",
+        Some(editor_find_callback),
+    )
+    .is_none()
+    {
         e.cx = saved_cx;
         e.cy = saved_cy;
         e.rowoff = saved_rowoff;
