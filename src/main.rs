@@ -515,6 +515,8 @@ fn editor_rows_to_string(e: &EditorConfig) -> String {
 
 fn editor_open(e: &mut EditorConfig, filename: &str) {
     e.filename = Some(filename.into());
+    editor_select_syntax_highlight(e);
+
     let file = unwrap_or_die("editor_open/open", std::fs::File::open(filename));
     let reader = std::io::BufReader::new(file);
     for line in reader.lines() {
@@ -531,6 +533,7 @@ fn editor_save(e: &mut EditorConfig) {
             editor_set_status_message(e, "Save aborted!");
             return;
         }
+        editor_select_syntax_highlight(e);
     }
 
     match &e.filename {
