@@ -598,7 +598,7 @@ fn editor_prompt(
         editor_refresh_screen(e);
         let k = editor_read_key();
         match k {
-            ref k if is_backspace_or_delete(k) => {
+            ref k if is_backspace_or_delete(k) && !buf.is_empty() => {
                 buf.remove(buf.len() - 1);
             }
             EditorKey::Escape => {
