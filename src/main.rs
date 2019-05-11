@@ -69,7 +69,7 @@ fn is_backspace_or_delete(k: &EditorKey) -> bool {
 
 /*** data ***/
 
-#[derive(Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Ord, PartialOrd, Eq, PartialEq, Clone)]
 enum Highlight {
     Normal,
     Number,
@@ -287,9 +287,9 @@ fn editor_update_syntax(row: &mut ERow) {
     }
 }
 
-fn editor_syntax_to_color(hl: Highlight) -> u8 {
+fn editor_syntax_to_color(hl: &Highlight) -> u8 {
     match hl {
-        Highlight::Normal => 31,
+        Highlight::Number => 31,
         _ => 37,
     }
 }
@@ -624,17 +624,21 @@ fn editor_draw_rows(e: &EditorConfig, buffer: &mut String) {
                 .unwrap_or(0)
                 .min(e.screencols);
             if len > 0 {
-                let s = &e.rows[filerow].render[e.coloff..];
-                for c in s.chars() {
-                    if c.is_ascii_digit() {
-                        *buffer += "\x1b[31m";
-                        buffer.push(c);
+                let s = &row.render[e.coloff..];
+                let hls = &row.hl[e.coloff..];
+                for (c, hl) in s.chars().zip(hls) {
+                    if *hl == Highlight::Normal {
                         *buffer += "\x1b[39m";
+                        buffer.push(c);
                     } else {
+                        let color = editor_syntax_to_color(hl);
+                        *buffer += &format!("\x1b[{}m", color);
                         buffer.push(c);
                     }
                 }
             }
+
+            *buffer += "\x1b[39m";
         }
         *buffer += "\x1b[K";
         *buffer += "\r\n";
