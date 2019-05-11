@@ -266,6 +266,20 @@ fn editor_row_cx_to_rx(r: &ERow, cx: usize) -> usize {
     rx
 }
 
+fn editor_row_rx_to_cx(r: &ERow, rx: usize) -> usize {
+    let mut cur_rx = 0;
+    for (cx, c) in r.render.char_indices() {
+        cur_rx += match c {
+            '\t' => BYOTE_TAB_STOP - (cur_rx % BYOTE_TAB_STOP),
+            _ => 1,
+        };
+        if cur_rx > rx {
+            return cx;
+        };
+    }
+    rx
+}
+
 fn editor_update_row(r: &mut ERow) {
     r.render = r
         .chars
