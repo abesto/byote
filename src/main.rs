@@ -327,13 +327,17 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
     let mut prev_sep: bool = true;
     let mut in_string: char = '\0';
 
-    let mut iter = row.render.char_indices();
+    let mut iter = row.render.char_indices().peekable();
     let mut prev_hl = Highlight::Normal;
 
     while let Some((i, c)) = iter.next() {
         if syntax.flags.contains(HL::HIGHLIGHT_STRINGS) {
             if in_string != '\0' {
                 row.hl[i] = Highlight::String;
+                if c == '\\' && iter.peek().is_some() {
+                    row.hl[iter.next().unwrap().0] = Highlight::String;
+                    continue;
+                }
                 if c == in_string as char {
                     in_string = '\0';
                 };
