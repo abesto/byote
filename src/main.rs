@@ -576,7 +576,6 @@ fn editor_scroll(e: &mut EditorConfig) {
     if e.rx >= e.coloff + e.screencols {
         e.coloff = e.rx - e.screencols + 1;
     }
-    editor_set_status_message(e, &format!("{} {}", e.cy, e.rowoff));
 }
 
 fn flush_stdout() {
