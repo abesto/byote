@@ -382,7 +382,11 @@ fn editor_open(e: &mut EditorConfig, filename: &str) {
 
 fn editor_save(e: &mut EditorConfig) {
     if e.filename.is_none() {
-        e.filename = editor_prompt(e, "Save as: ");
+        e.filename = editor_prompt(e, "Save as (ESC to cancel): ");
+        if e.filename.is_none() {
+            editor_set_status_message(e, "Save aborted!");
+            return;
+        }
     }
 
     match &e.filename {
