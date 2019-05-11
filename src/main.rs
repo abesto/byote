@@ -69,9 +69,16 @@ fn is_backspace_or_delete(k: &EditorKey) -> bool {
 
 /*** data ***/
 
+#[derive(Ord, PartialOrd, Eq, PartialEq)]
+enum Highlight {
+    Normal,
+    Number,
+}
+
 struct ERow {
     chars: String,
     render: String,
+    hl: Vec<Highlight>,
 }
 
 struct FindState {
@@ -314,6 +321,7 @@ fn editor_insert_row(e: &mut EditorConfig, at: usize, s: &str) {
     let mut row = ERow {
         chars: String::from(s),
         render: String::new(),
+        hl: Vec::new(),
     };
     editor_update_row(&mut row);
 
