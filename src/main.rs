@@ -73,6 +73,7 @@ fn is_backspace_or_delete(k: &EditorKey) -> bool {
 enum Highlight {
     Normal,
     Number,
+    Match,
 }
 
 struct ERow {
@@ -290,6 +291,7 @@ fn editor_update_syntax(row: &mut ERow) {
 fn editor_syntax_to_color(hl: &Highlight) -> u8 {
     match hl {
         Highlight::Number => 31,
+        Highlight::Match => 34,
         _ => 37,
     }
 }
