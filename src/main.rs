@@ -203,7 +203,7 @@ static HLDB: [EditorSyntax; 1] = [EditorSyntax {
         "void|",
     ],
     singleline_comment_start: Some("//"),
-    multiline_comment: Some(("/*", "*/")),
+    multiline_comment: Some(("/**", "*/")),
     flags: HL::C_FLAGS,
 }];
 
@@ -366,11 +366,11 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
 
     let scs_len = scs.len();
     let mcs_len = mcs.len();
-    let mce_len = mce.len()
-
+    let mce_len = mce.len();
 
     let mut prev_sep: bool = true;
     let mut in_string: char = '\0';
+    let mut in_comment: bool = false;
 
     let mut iter = row.render.char_indices().peekable();
     let mut prev_hl = Highlight::Normal;
@@ -381,6 +381,28 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
             row.hl
                 .splice(i..i + comment_len, vec![Highlight::Comment; comment_len]);
             break;
+        }
+
+        if mcs_len > 0 && mce_len > 0 && in_string == '\0' {
+            if in_comment {
+                row.hl[i] = Highlight::MLComment;
+                if row.render[i..].starts_with(mce) {
+                    row.hl
+                        .splice(i..i + mce_len, vec![Highlight::MLComment; mce_len]);
+                    iter.nth(mce_len - 2);
+                    in_comment = false;
+                    prev_sep = true;
+                    continue;
+                } else {
+                    continue;
+                }
+            } else if row.render[i..].starts_with(mcs) {
+                row.hl
+                    .splice(i..i + mcs_len, vec![Highlight::MLComment; mcs_len]);
+                iter.nth(mcs_len - 2);
+                in_comment = true;
+                continue;
+            }
         }
 
         if syntax.flags.contains(HL::HIGHLIGHT_STRINGS) {
