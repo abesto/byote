@@ -205,7 +205,7 @@ static HLDB: [EditorSyntax; 1] = [EditorSyntax {
         "void|",
     ],
     singleline_comment_start: Some("//"),
-    multiline_comment: Some(("/**", "*/")),
+    multiline_comment: Some(("/*", "*/")),
     flags: HL::C_FLAGS,
 }];
 
@@ -372,7 +372,10 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
 
     let mut prev_sep: bool = true;
     let mut in_string: char = '\0';
-    let mut in_comment: bool = false;
+
+    let row = &e.rows[at_row];
+    let mut in_comment: bool = row.idx > 0 && e.rows[row.idx - 1].hl_open_comment;
+    let row = &mut e.rows[at_row];
 
     let mut iter = row.render.char_indices().peekable();
     let mut prev_hl = Highlight::Normal;
@@ -470,6 +473,13 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
         prev_sep = is_separator(c);
         prev_hl = row.hl[i].clone();
     }
+
+    let changed = row.hl_open_comment != in_comment;
+    row.hl_open_comment = in_comment;
+    let row = &e.rows[at_row];
+    if changed && row.idx + 1 < e.rows.len() {
+        editor_update_syntax(e, row.idx + 1);
+    }
 }
 
 fn editor_syntax_to_color(hl: &Highlight) -> u8 {
@@ -562,7 +572,7 @@ fn editor_insert_row(e: &mut EditorConfig, at: usize, s: &str) {
         hl_open_comment: false,
     };
 
-    for later_row in &mut e.rows[at + 1..] {
+    for later_row in &mut e.rows.iter_mut().skip(at + 1) {
         later_row.idx += 1;
     }
 
