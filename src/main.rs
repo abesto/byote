@@ -103,9 +103,11 @@ enum Highlight {
 }
 
 struct ERow {
+    idx: usize,
     chars: String,
     render: String,
     hl: Vec<Highlight>,
+    hl_open_comment: bool,
 }
 
 struct FindState {
@@ -553,9 +555,11 @@ fn editor_insert_row(e: &mut EditorConfig, at: usize, s: &str) {
     }
 
     let row = ERow {
+        idx: at,
         chars: String::from(s),
         render: String::new(),
         hl: Vec::new(),
+        hl_open_comment: false,
     };
     e.rows.insert(at, row);
     editor_update_row(e, at);
