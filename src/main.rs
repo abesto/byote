@@ -561,6 +561,11 @@ fn editor_insert_row(e: &mut EditorConfig, at: usize, s: &str) {
         hl: Vec::new(),
         hl_open_comment: false,
     };
+
+    for later_row in &mut e.rows[at + 1..] {
+        later_row.idx += 1;
+    }
+
     e.rows.insert(at, row);
     editor_update_row(e, at);
 
@@ -573,6 +578,11 @@ fn editor_del_row(e: &mut EditorConfig, at: usize) {
         return;
     }
     e.rows.remove(at);
+
+    for later_row in &mut e.rows[at..] {
+        later_row.idx -= 1;
+    }
+
     e.dirty = true;
 }
 
