@@ -376,7 +376,7 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
     let mut prev_hl = Highlight::Normal;
 
     while let Some((i, c)) = iter.next() {
-        if scs_len > 0 && in_string == '\0' && row.render[i..].starts_with(scs) {
+        if scs_len > 0 && in_string == '\0' && !in_comment && row.render[i..].starts_with(scs) {
             let comment_len = row.hl.len() - i;
             row.hl
                 .splice(i..i + comment_len, vec![Highlight::Comment; comment_len]);
