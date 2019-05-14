@@ -86,6 +86,7 @@ struct EditorSyntax {
     filematch: &'static [&'static str],
     keywords: &'static [&'static str],
     singleline_comment_start: Option<&'static str>,
+    multiline_comment: Option<(&'static str, &'static str)>,
     flags: HL,
 }
 
@@ -202,6 +203,7 @@ static HLDB: [EditorSyntax; 1] = [EditorSyntax {
         "void|",
     ],
     singleline_comment_start: Some("//"),
+    multiline_comment: Some(("/*", "*/")),
     flags: HL::C_FLAGS,
 }];
 
