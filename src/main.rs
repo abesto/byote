@@ -362,7 +362,12 @@ fn editor_update_syntax(e: &mut EditorConfig, at_row: usize) {
     let keywords = syntax.keywords;
 
     let scs = syntax.singleline_comment_start.unwrap_or("");
+    let (mcs, mce) = syntax.multiline_comment.unwrap_or(("", ""));
+
     let scs_len = scs.len();
+    let mcs_len = mcs.len();
+    let mce_len = mce.len()
+
 
     let mut prev_sep: bool = true;
     let mut in_string: char = '\0';
