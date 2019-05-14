@@ -93,6 +93,7 @@ struct EditorSyntax {
 enum Highlight {
     Normal,
     Comment,
+    MLComment,
     Keyword1,
     Keyword2,
     String,
@@ -447,7 +448,7 @@ fn editor_syntax_to_color(hl: &Highlight) -> u8 {
         Highlight::Keyword1 => 33,
         Highlight::Match => 34,
         Highlight::String => 35,
-        Highlight::Comment => 36,
+        Highlight::Comment | Highlight::MLComment => 36,
         _ => 37,
     }
 }
